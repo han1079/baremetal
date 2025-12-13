@@ -24,7 +24,9 @@ ifeq ($(TARGET),stm32)
     LD = $(TARGET_DIR)/app.ld
     
     APP_SRCS = $(TARGET_DIR)/app.c
-    CORE_SRCS = $(TARGET_DIR)/core/nvic.c
+    CORE_SRCS = $(TARGET_DIR)/core/nvic.c \
+				 $(TARGET_DIR)/core/m0_clock.c \
+
     PERIPH_SRCS = $(TARGET_DIR)/peripherals/gpio.c \
                   $(TARGET_DIR)/peripherals/gpio_defs.c \
                   $(TARGET_DIR)/peripherals/timer.c \
