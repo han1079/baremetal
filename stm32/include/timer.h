@@ -3,13 +3,6 @@
 #include <common.h>
 #include <timer_defs.h>
 
-extern uint32_t ClockConfigReg1Value;
-extern uint32_t ClockControlReg1Value;
-extern uint32_t ClockControlReg2Value;
-
-extern uint32_t SystemCoreClock;
-
-
 #define TIMER_ENABLE(timer_ctrl) \
     SET_BIT((timer_ctrl.p_TIMER_BASE)->CONTROL_REG_1, 0);
 #define TIMER_DISABLE(timer_ctrl) \

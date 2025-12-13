@@ -55,14 +55,14 @@ static inline void force_system_reset(void) {
 static inline void enable_interrupt_type(InterruptType type) {
     SET_BIT(*NVIC_SET_ENABLE_REG, type);
 }
-void disable_interrupt_type(InterruptType type) {
+static inline void disable_interrupt_type(InterruptType type) {
     SET_BIT(*NVIC_CLEAR_ENABLE_REG, type);
 }
 
-void force_interrupt_type(InterruptType type) {
+static inline void force_interrupt_type(InterruptType type) {
     SET_BIT(*NVIC_SET_PENDING_REG, type);
 }
-void clear_interrupt_type(InterruptType type) {
+static inline void clear_interrupt_type(InterruptType type) {
     SET_BIT(*NVIC_CLEAR_PENDING_REG, type);
 }
 

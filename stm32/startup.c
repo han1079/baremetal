@@ -51,7 +51,7 @@ void CEC_CAN_Global_Handler(void)      __attribute__((weak, alias("No_Op_Handler
 void USB_Global_Handler(void)      __attribute__((weak, alias("No_Op_Handler")));
 
 
-MEMADDR_T vector_table[32] __attribute__((section(".vector_segment"))) = {
+MEMADDR_T vector_table[36] __attribute__((section(".vector_segment"))) = {
     (MEMADDR_T)&_estack,
     (MEMADDR_T)&Reset_Handler,
     (MEMADDR_T)&NMI_Handler,
