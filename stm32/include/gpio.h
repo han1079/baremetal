@@ -1,7 +1,7 @@
 #ifndef GPIO_H
 #define GPIO_H
-#include <stdint.h>
-#include "register_manip.h"
+#include <common.h>
+#include <gpio_defs.h>
 
 #define GPIO_A_OFFSET 0x00000000UL
 #define GPIO_B_OFFSET 0x00000400UL
@@ -40,17 +40,11 @@ typedef enum PinPullMode {
     PIN_PULL_DOWN = 0b10,
 } PinPullMode;
 
-typedef struct {
-    GPIO_Typedef* base;
-    uint8_t offset;
-} gpio_t;
-
 void gpio_initialize_clock(void);
 void set_pin(gpio_t pin, int mode);
 void set_pin_mode(gpio_t pin, PinMode mode);
 void set_pin_pull(gpio_t pin, PinPullMode mode);
 int get_pin(gpio_t pin);
 
-extern const gpio_t PA5;
 
 #endif //GPIO_H

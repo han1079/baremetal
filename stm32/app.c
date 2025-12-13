@@ -1,4 +1,4 @@
-#include "gpio.h"
+#include <gpio.h>
 
 void delay(int cycles) {
     int i = cycles;
@@ -13,9 +13,9 @@ void main(void) {
     set_pin_pull(PA5, PIN_PULL_DOWN);
     set_pin(PA5, 1);
     while(1) {
-        delay(80000);
+        delay(60000);
         set_pin(PA5, 0);
-        delay(80000);
+        delay(60000);
         set_pin(PA5, 1);
     }
 }

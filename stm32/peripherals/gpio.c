@@ -1,10 +1,5 @@
-#include "gpio.h"
+#include <gpio.h>
 
-// Do only a single pin definition here. Only need the LED.
-const gpio_t PA5 = {
-    .base = GPIO_A,
-    .offset = 5U
-};
 
 void gpio_initialize_clock(void) {
     uint32_t mask = (0x3F << 17);

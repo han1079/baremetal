@@ -3,3 +3,5 @@
 *.bin
 *.vscode
 tools/
+.clangd 
+*compile_commands.json
