@@ -23,9 +23,14 @@ void systick_disable() {
 void systick_set_reload_value(uint32_t value) {
     SET_WORD(SYSTICK->RELOAD_VALUE_REG, value & SYSTICK_VALUE_MASK); // Mask to 24 bits and write value
 }
-void systick_enable_for_1ms_ticks() {
-    uint32_t system_core_clock = get_system_core_clock();
-    systick_set_reload_value(system_core_clock / 1000 - 1); // Set for 1ms ticks
+void systick_init_1khz(uint32_t system_core_clock) {
+    if (system_core_clock == 48000000UL) {
+        systick_set_reload_value(48000 - 1); // Set for 1ms ticks
+    } else if (system_core_clock == 8000000UL) {
+        systick_set_reload_value(8000 - 1); // Set for 1ms ticks
+    } else {
+        ASSERT(0); // Unsupported clock speed
+    }
     systick_enable();
 }
 
