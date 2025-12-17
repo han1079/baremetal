@@ -1,4 +1,5 @@
 #include <core/m0_clock.h>
+
 uint32_t ClockConfigReg1Value;
 uint32_t ClockControlReg1Value;
 uint32_t ClockControlReg2Value;
@@ -43,6 +44,7 @@ uint32_t SystemCoreClock;
     GET_BIT(RCC->CLOCK_CONTROL, 1)
 
 
+
 uint32_t get_system_core_clock(void) {
     if (SYS_CLOCK_IS_HSI48()) {
         return 48000000UL;
@@ -57,6 +59,7 @@ uint32_t get_system_core_clock(void) {
 void sys_clock_set_high_speed(void) {
     if (DEBUG) { GET_CLOCK_DEBUG_VALUES() }
 
+    flash_set_latency_1ws();
     if (SYS_CLOCK_IS_HSI48()) {
         // Already using HSI48, nothing to do
         return;
@@ -68,21 +71,19 @@ void sys_clock_set_high_speed(void) {
 
     int attempts = 100;
     while (attempts > 0) {
-        if (HSI48_RDY_FLAG()) { break; }
         attempts--;
     }
 
-    ASSERT(attempts > 0); // RDY Flag should be set easily.
+    ASSERT(HSI48_RDY_FLAG()); // RDY Flag should be set easily.
 
     SET_SYS_CLOCK_TO_HSI48();
 
     attempts = 100;
     while (attempts > 0) {
-        if (SYS_CLOCK_IS_HSI48()) { break; }
         attempts--;
     }
 
-    ASSERT((attempts > 0)); // Sys clock should set smoothly.
+    ASSERT((SYS_CLOCK_IS_HSI48())); // Sys clock should set smoothly.
 
     SystemCoreClock = 48000000UL;
     if (DEBUG) { GET_CLOCK_DEBUG_VALUES() }
@@ -91,6 +92,7 @@ void sys_clock_set_high_speed(void) {
 void sys_clock_set_standard_speed(void) {
     // Unsets HSI48 and returns to default HSI clock 
     if (DEBUG) { GET_CLOCK_DEBUG_VALUES() }
+    flash_set_latency_0ws();
 
     if (SYS_CLOCK_IS_HSI()) {
         // Already using HSI, nothing to do

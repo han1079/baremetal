@@ -30,8 +30,6 @@
 #define TIMER_FORCE_UPDATE_EVENT(timer_ctrl) \
     SET_BIT((timer_ctrl.p_TIMER_BASE)->EVENT_GENERATION_REG, 0);
 
-void sys_clock_set_high_speed(void);
-void sys_clock_set_standard_speed(void);
 
 void timer_init(TimerControl_t timer_ctrl, uint32_t prescaler, uint16_t counter_threshold);
 void timer_disable(TimerControl_t timer_ctrl);

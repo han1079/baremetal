@@ -24,14 +24,18 @@ ifeq ($(TARGET),stm32)
     LD = $(TARGET_DIR)/app.ld
     
     APP_SRCS = $(TARGET_DIR)/app.c
+
     CORE_SRCS = $(TARGET_DIR)/core/nvic.c \
 				$(TARGET_DIR)/core/m0_clock.c \
 				$(TARGET_DIR)/core/systick.c
+
+	CONFIG_SRCS = $(TARGET_DIR)/configs/setup.c
 
     PERIPH_SRCS = $(TARGET_DIR)/peripherals/gpio.c \
                   $(TARGET_DIR)/peripherals/gpio_defs.c \
                   $(TARGET_DIR)/peripherals/timer.c \
                   $(TARGET_DIR)/peripherals/timer_defs.c
+				  
     STARTUP_SRCS = $(TARGET_DIR)/startup.c
     
     FLASH_CMD = $(OPENOCD) -s $(OPENOCD_PATH) -f interface/stlink.cfg -f target/stm32f0x.cfg -c "program $(BUILD_DIR)/app.elf verify reset exit"
@@ -46,7 +50,7 @@ BUILD_DIR = $(PROJECT_ROOT)/build/$(TARGET)
 ELF = $(BUILD_DIR)/app.elf
 BIN = $(BUILD_DIR)/app.bin
 
-SRCS = $(APP_SRCS) $(PERIPH_SRCS) $(STARTUP_SRCS) $(CORE_SRCS)
+SRCS = $(APP_SRCS) $(PERIPH_SRCS) $(STARTUP_SRCS) $(CORE_SRCS) $(CONFIG_SRCS)
 OBJS = $(patsubst $(TARGET_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 all: $(BIN)

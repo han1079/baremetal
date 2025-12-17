@@ -6,6 +6,9 @@
 
 static volatile uint32_t ms_counter = 0;
 
+void SysTick_Handler(void) {
+    ms_counter++;
+}
 
 uint32_t get_elapsed_ms() { // Public Getter API for elapsed ms
     return ms_counter;
@@ -31,6 +34,7 @@ void systick_init_1khz(uint32_t system_core_clock) {
     } else {
         ASSERT(0); // Unsupported clock speed
     }
+    SET_BIT(SYSTICK->CONTROL_STATUS_REG, 2); // Set clock source to processor clock
     systick_enable();
 }
 
