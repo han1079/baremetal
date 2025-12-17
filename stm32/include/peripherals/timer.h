@@ -1,7 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
-#include <common.h>
-#include <timer_defs.h>
+#include <core/common.h>
+#include <definitions/timer_defs.h>
 
 #define TIMER_ENABLE(timer_ctrl) \
     SET_BIT((timer_ctrl.p_TIMER_BASE)->CONTROL_REG_1, 0);

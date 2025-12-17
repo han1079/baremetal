@@ -1,4 +1,4 @@
-#include <m0_clock.h>
+#include <core/m0_clock.h>
 uint32_t ClockConfigReg1Value;
 uint32_t ClockControlReg1Value;
 uint32_t ClockControlReg2Value;
@@ -43,14 +43,15 @@ uint32_t SystemCoreClock;
     GET_BIT(RCC->CLOCK_CONTROL, 1)
 
 
-void get_system_core_clock(void) {
+uint32_t get_system_core_clock(void) {
     if (SYS_CLOCK_IS_HSI48()) {
-        SystemCoreClock = 48000000UL;
+        return 48000000UL;
     } else if (SYS_CLOCK_IS_HSI()) {
-        SystemCoreClock = 8000000UL;
+        return 8000000UL;
     } else {
         ASSERT(0); // Unknown clock source
     }
+    return 8000000UL; // Default to 8 MHz to prevent compiler warnings
 }
 
 void sys_clock_set_high_speed(void) {
@@ -61,7 +62,7 @@ void sys_clock_set_high_speed(void) {
         return;
     }
 
-    ASSERT(!HSI48_ON_FLAG()); // HSI48 should be off before enabling. Otherwise, something is wrong.
+    ASSERT(!(HSI48_ON_FLAG())); // HSI48 should be off before enabling. Otherwise, something is wrong.
 
     SET_BIT(RCC->CLOCK_CONTROL_2, 16); // Enable HSI48 (bit 16 of Clock Control Reg 2)
 
@@ -81,7 +82,7 @@ void sys_clock_set_high_speed(void) {
         attempts--;
     }
 
-    ASSERT(attempts > 0); // Sys clock should set smoothly.
+    ASSERT((attempts > 0)); // Sys clock should set smoothly.
 
     SystemCoreClock = 48000000UL;
     if (DEBUG) { GET_CLOCK_DEBUG_VALUES() }
@@ -95,7 +96,7 @@ void sys_clock_set_standard_speed(void) {
         // Already using HSI, nothing to do
         return;
     }
-    ASSERT(HSI_ON_FLAG()); // HSI should be on already. We don't ever turn it off.
+    ASSERT((HSI_ON_FLAG())); // HSI should be on already. We don't ever turn it off.
 
     SET_SYS_CLOCK_TO_HSI();
 
@@ -105,11 +106,11 @@ void sys_clock_set_standard_speed(void) {
         attempts--;
     }
 
-    ASSERT(attempts > 0); // Sys clock should set smoothly.
+    ASSERT((attempts > 0)); // Sys clock should set smoothly.
     SET_HSI48_OFF();
 
     __asm__("NOP"); // Small delay to allow HSI48 to turn off
-    ASSERT(!HSI48_ON_FLAG()); // HSI48 should be off now.
+    ASSERT(!(HSI48_ON_FLAG())); // HSI48 should be off now.
 
     SystemCoreClock = 8000000UL;
     if (DEBUG) { GET_CLOCK_DEBUG_VALUES() }

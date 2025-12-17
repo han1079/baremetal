@@ -1,7 +1,7 @@
 #ifndef M0_CLOCK_H
 #define M0_CLOCK_H
 
-#include <common.h>
+#include <core/common.h>
 
 void sys_clock_set_high_speed(void);
 void sys_clock_set_standard_speed(void);

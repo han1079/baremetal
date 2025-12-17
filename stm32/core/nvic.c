@@ -1,4 +1,4 @@
-#include <nvic.h>
+#include <core/nvic.h>
 
 // Interrupt type goes 0-31, so 4 bits to index. Bitshifting right by 2 is equivalent to dividing by 4 
 // and discarding the remainder. This gives the correct word index.

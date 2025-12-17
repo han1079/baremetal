@@ -1,7 +1,7 @@
 #ifndef GPIO_H
 #define GPIO_H
-#include <common.h>
-#include <gpio_defs.h>
+#include <core/common.h>
+#include <definitions/gpio_defs.h>
 
 #define GPIO_A_OFFSET 0x00000000UL
 #define GPIO_B_OFFSET 0x00000400UL

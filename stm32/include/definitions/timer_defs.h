@@ -1,7 +1,7 @@
 #ifndef TIMER_DEFS_H
 #define TIMER_DEFS_H
 
-#include <common.h>
+#include <core/common.h>
 
 typedef struct {
     REGADDR_T CONTROL_REG_1;

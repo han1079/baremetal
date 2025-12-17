@@ -1,6 +1,6 @@
 #ifndef GPIO_DEFS_H
 #define GPIO_DEFS_H
-#include <common.h>
+#include <core/common.h>
 
 #define GPIO_CTRL_BASE 0x48000000UL
 typedef struct {

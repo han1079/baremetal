@@ -1,4 +1,4 @@
-#include <gpio.h>
+#include <peripherals/gpio.h>
 
 void delay(int cycles) {
     int i = cycles;
@@ -7,7 +7,7 @@ void delay(int cycles) {
     }
 }
 
-void main(void) {
+int main(void) {
     gpio_initialize_clock();
     set_pin_mode(PA5, PINMODE_OUTPUT);
     set_pin_pull(PA5, PIN_PULL_DOWN);
@@ -18,4 +18,5 @@ void main(void) {
         delay(60000);
         set_pin(PA5, 1);
     }
+    return 0;
 }

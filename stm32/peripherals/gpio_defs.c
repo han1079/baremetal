@@ -1,4 +1,4 @@
-#include <gpio.h>
+#include <peripherals/gpio.h>
 
 const gpio_t PA1 = {.base = GPIO_A, .offset = 1U };
 const gpio_t PA2 = {.base = GPIO_A, .offset = 2U };

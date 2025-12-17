@@ -1,6 +1,6 @@
 #ifndef NVIC_H
 #define NVIC_H
-#include <common.h>
+#include <core/common.h>
 
 #define SYSCTRL_BASE 0xE000ED00UL
 typedef struct{
@@ -15,14 +15,7 @@ typedef struct{
 } SYSCTRL_Typedef;
 #define SYSCTRL ((SYSCTRL_Typedef*) SYSCTRL_BASE)
 
-#define SYSTICK_BASE 0xE000E010UL
-typedef struct {
-    REGADDR_T CONTROL_STATUS_REG;
-    REGADDR_T RELOAD_VALUE_REG;
-    REGADDR_T CURRENT_VALUE_REG;
-    REGADDR_T CALIBRATION_VALUE_REG;
-} SYSTICK_Typedef;
-#define SYSTICK ((SYSTICK_Typedef*) SYSTICK_BASE)
+
 
 #define NVIC_SET_ENABLE_REG (REGADDR_T*)0xE000E100UL
 #define NVIC_CLEAR_ENABLE_REG (REGADDR_T*)0xE000E180UL
@@ -37,13 +30,7 @@ typedef struct {
 #define NVIC_PRIORITY ((NVIC_PRIORITY_Typedef*) NVIC_PRIORITY_BASE)
 
 
-static inline void system_enable_interrupts(void) {
-    __asm__ volatile ("cpsie i" : : : "memory");
-}
 
-static inline void system_disable_interrupts(void) {
-    __asm__ volatile ("cpsid i" : : : "memory");
-}
 
 static inline void force_system_reset(void) {
     __asm__ volatile ("dsb" : : : "memory");
