@@ -12,7 +12,7 @@ void uart_deinit(UartPort_t uart_port);
 
 
 void uart_send_byte(UartPort_t uart_port, uint8_t data);
-// uint8_t uart_receive_byte(UartPort_t uart_port);
+uint8_t uart_receive_byte(UartPort_t uart_port);
 // void uart_send_data(UartPort_t uart_port, uint8_t* data, uint32_t length);
 // void uart_receive_data(UartPort_t uart_port, uint8_t* buffer, uint32_t length);
 

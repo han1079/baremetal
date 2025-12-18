@@ -6,10 +6,10 @@ typedef volatile uint32_t REGADDR_T;
 
 
 #define DEBUG 1
-#define SET_BIT(val, x) val |= (1UL << x) 
-#define RESET_BIT(val, x) val &= ~(1UL << x) 
-#define SET_WORD(val, word) val = word
-#define GET_BIT(val, x) val & (1UL << x) 
+#define SET_BIT(val, x) (val |= (1UL << x)) 
+#define RESET_BIT(val, x) (val &= ~(1UL << x)) 
+#define SET_WORD(val, word) (val = word)
+#define GET_BIT(val, x) (val & (1UL << x)) 
 #ifdef DEBUG
     // If DEBUG is defined, check the condition
     #define ASSERT(cond) \
