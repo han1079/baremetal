@@ -3,6 +3,8 @@
 #include <core/common.h>
 #include <definitions/gpio_defs.h>
 
+
+//TODO - move all these to gpio_defs.h
 #define GPIO_A_OFFSET 0x00000000UL
 #define GPIO_B_OFFSET 0x00000400UL
 #define GPIO_C_OFFSET 0x00000800UL
@@ -39,6 +41,19 @@ typedef enum PinPullMode {
     PIN_PULL_UP = 0b01,
     PIN_PULL_DOWN = 0b10,
 } PinPullMode;
+
+typedef enum AlternateFunction {
+    AF0 = 0b0000,
+    AF1 = 0b0001,
+    AF2 = 0b0010,
+    AF3 = 0b0011,
+    AF4 = 0b0100,
+    AF5 = 0b0101,
+    AF6 = 0b0110,
+    AF7 = 0b0111,
+} AlternateFunction;
+
+void gpio_configure_alt_function(gpio_t pin, AlternateFunction af, PinSpeed speed, PinPullMode pull);
 
 void gpio_initialize_clock(void);
 void set_pin(gpio_t pin, int mode);
