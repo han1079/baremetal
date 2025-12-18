@@ -19,4 +19,9 @@ void sys_clock_set_high_speed(void);
 void sys_clock_set_standard_speed(void);
 uint32_t get_system_core_clock(void);
 
+uint32_t get_ahb_prescaler_divider(void);
+uint32_t get_apb_prescalar_divider(void);
+uint32_t get_apb1_prescaler_divider(void);
+uint32_t get_apb2_prescaler_divider(void);
+
 #endif //M0_CLOCK_H

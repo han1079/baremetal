@@ -34,8 +34,10 @@ ifeq ($(TARGET),stm32)
     PERIPH_SRCS = $(TARGET_DIR)/peripherals/gpio.c \
                   $(TARGET_DIR)/peripherals/gpio_defs.c \
                   $(TARGET_DIR)/peripherals/timer.c \
-                  $(TARGET_DIR)/peripherals/timer_defs.c
-				  
+                  $(TARGET_DIR)/peripherals/timer_defs.c \
+				  $(TARGET_DIR)/peripherals/uart.c \
+				  $(TARGET_DIR)/peripherals/uart_defs.c
+
     STARTUP_SRCS = $(TARGET_DIR)/startup.c
     
     FLASH_CMD = $(OPENOCD) -s $(OPENOCD_PATH) -f interface/stlink.cfg -f target/stm32f0x.cfg -c "program $(BUILD_DIR)/app.elf verify reset exit"
@@ -67,7 +69,7 @@ $(BUILD_DIR)/%.o: $(TARGET_DIR)/%.c
 $(ELF): $(OBJS)
 	@mkdir -p $(dir $@)
 	@echo "Linking $@ ..."
-	$(CC) $(LDFLAGS) -T $(LD) $^ -o $@
+	$(CC) $(LDFLAGS) -T $(LD) $^ -o $@ -lgcc
 
 # Binary conversion
 $(BIN): $(ELF)

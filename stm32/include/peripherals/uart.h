@@ -5,19 +5,30 @@
 #include <definitions/uart_defs.h>
 
 // API 
-void uart_init(UartPort_t* uart_port);
-void uart_deinit(UartPort_t* uart_port);
-void uart_send_byte(UartPort_t* uart_port, uint8_t data);
-uint8_t uart_receive_byte(UartPort_t* uart_port);
-void uart_send_data(UartPort_t* uart_port, uint8_t* data, uint32_t length);
-void uart_receive_data(UartPort_t* uart_port, uint8_t* buffer, uint32_t length);
+void uart_init(UartPort_t uart_port);
+void uart_enable_interrupts(UartPort_t uart_port);
+void uart_disable_interrupts(UartPort_t uart_port);
+void uart_deinit(UartPort_t uart_port);
+
+
+void uart_send_byte(UartPort_t uart_port, uint8_t data);
+// uint8_t uart_receive_byte(UartPort_t uart_port);
+// void uart_send_data(UartPort_t uart_port, uint8_t* data, uint32_t length);
+// void uart_receive_data(UartPort_t uart_port, uint8_t* buffer, uint32_t length);
 
 // Helper functions
-void __uart_configure_gpio_pins(UartPort_t* uart_port);
+void __uart_configure_gpio_pins(UartPort_t uart_port);
+void __uart_configure_baud_rate(UartPortConfig_t* uart, uint32_t baud);
+uint32_t __uart_get_clock_frequency(UartPortConfig_t* uart);
 
-static inline void __uart_configure_baud_rate(UartPortConfig_t* uart, uint32_t baud) {
-    SET_WORD(uart->p_UART_BASE->BAUD_RATE_REG, baud); 
+static inline void __uart_set_clock_source(UartPortConfig_t* uart, uint8_t source) {
+    set_register(uart->p_UART_CLOCK_SOURCE_REG, uart->uart_clock_source_offset, 2, source);
 }
+static inline uint8_t __uart_get_clock_source(UartPortConfig_t* uart) {
+    return (uint8_t)((*(uart->p_UART_CLOCK_SOURCE_REG) >> uart->uart_clock_source_offset) & 0b11UL);
+}
+
+
 static inline void __uart_enable_clock(UartPortConfig_t* uart) {
     SET_BIT(*(uart->p_APB_CLOCK_ENABLE_REG), uart->apb_clock_enable_offset);
 }
@@ -60,6 +71,17 @@ static inline void __uart_disable_rx_interrupt(UartPortConfig_t* uart) {
 static inline void __uart_disable_base(UartPortConfig_t* uart) {
     RESET_BIT(uart->p_UART_BASE->CONTROL_REG_1, 0);
 }
+
+// Helpers to check status flags
+static inline uint8_t __get_uart_word_size(UartPortConfig_t* uart){
+    ASSERT(GET_BIT((uart)->p_UART_BASE->CONTROL_REG_1, 28) == 0); // Word length not allowed to be 7
+    return (GET_BIT((uart)->p_UART_BASE->CONTROL_REG_1, 12)) ? 9 : 8;
+}
+
+static inline uint8_t __get_uart_stop_bits(UartPortConfig_t* uart){
+    return (uint8_t)((((uart)->p_UART_BASE->CONTROL_REG_2 >> 12) & 0b11UL));
+}
+
 
 
 #endif //UART_H

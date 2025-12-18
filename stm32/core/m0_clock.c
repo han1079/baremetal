@@ -117,3 +117,43 @@ void sys_clock_set_standard_speed(void) {
     SystemCoreClock = 8000000UL;
     if (DEBUG) { GET_CLOCK_DEBUG_VALUES() }
 }
+
+uint32_t get_ahb_prescaler_divider(void) {
+    // AHB prescaler is bits 4-7 of RCC_CLOCK_CONFIG
+    uint8_t prescaler_bits = (RCC->CLOCK_CONFIG >> 4) & 0b1111UL;
+    switch (prescaler_bits) {
+        case 0b0000: return 1;
+        case 0b1000: return 2;
+        case 0b1001: return 4;
+        case 0b1010: return 8;
+        case 0b1011: return 16;
+        case 0b1100: return 64;
+        case 0b1101: return 128;
+        case 0b1110: return 256;
+        case 0b1111: return 512;
+        default: return 1; // Reserved values treated as no division
+    }
+}
+
+uint32_t get_apb_prescalar_divider(void) {
+    // Grabs default prescalar. In M0 it's APB1.
+    return get_apb1_prescaler_divider();
+}
+
+uint32_t get_apb1_prescaler_divider(void) {
+    // APB1 prescaler is bits 8-10 of RCC_CLOCK_CONFIG
+    uint8_t prescaler_bits = (RCC->CLOCK_CONFIG >> 8) & 0b111UL;
+    switch (prescaler_bits) {
+        case 0b000: return 1;
+        case 0b100: return 2;
+        case 0b101: return 4;
+        case 0b110: return 8;
+        case 0b111: return 16;
+        default: return 1; // Reserved values treated as no division
+    }
+}
+
+uint32_t get_apb2_prescaler_divider(void) {
+    // Not applicable for M0.
+    return 1;
+}
