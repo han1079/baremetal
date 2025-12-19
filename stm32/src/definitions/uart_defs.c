@@ -1,5 +1,11 @@
 #include <definitions/uart_defs.h>
 
+#define UART1_BUFFER_SIZE 128
+static uint8_t uart1_rx_rbuf_storage[UART1_BUFFER_SIZE];
+static uint8_t uart1_tx_rbuf_storage[UART1_BUFFER_SIZE];
+static RingBuffer_t uart1_rx_rbuf;
+static RingBuffer_t uart1_tx_rbuf;
+
 const UartPortConfig_t UART1 = {
     .p_UART_BASE = (UART_Typedef*)UART1_BASE,
     .p_NVIC_ENABLE_REG = (REGADDR_T*)UART_NVIC_SET_ENABLE_REG,
@@ -9,6 +15,11 @@ const UartPortConfig_t UART1 = {
     .p_APB_CLOCK_ENABLE_REG = (REGADDR_T*)&(RCC->PERIPH_APB_2_CLOCK_ENABLE),
     .apb_clock_enable_offset = UART1_APB_ENABLE_OFFSET,
     .baud_rate = 115200,
+    .rx_buffer_storage = uart1_rx_rbuf_storage,
+    .tx_buffer_storage = uart1_tx_rbuf_storage,
+    .rx_ring_buffer = &uart1_rx_rbuf,
+    .tx_ring_buffer = &uart1_tx_rbuf,
+    .buffer_size = UART1_BUFFER_SIZE,
 };
 const UartPortConfig_t UART2 = {
     .p_UART_BASE = (UART_Typedef*)UART2_BASE,
@@ -19,6 +30,11 @@ const UartPortConfig_t UART2 = {
     .p_APB_CLOCK_ENABLE_REG = (REGADDR_T*)&(RCC->PERIPH_APB_1_CLOCK_ENABLE),
     .apb_clock_enable_offset = UART2_APB_ENABLE_OFFSET,
     .baud_rate = 115200,
+    .rx_buffer_storage = 0, // Not implementing for UART2+
+    .tx_buffer_storage = 0,
+    .rx_ring_buffer = 0,
+    .tx_ring_buffer = 0,
+    .buffer_size = 0,
 };
 const UartPortConfig_t UART3 = {
     .p_UART_BASE = (UART_Typedef*)UART3_BASE,
@@ -29,6 +45,11 @@ const UartPortConfig_t UART3 = {
     .p_APB_CLOCK_ENABLE_REG = (REGADDR_T*)&(RCC->PERIPH_APB_1_CLOCK_ENABLE),
     .apb_clock_enable_offset = UART3_APB_ENABLE_OFFSET,
     .baud_rate = 115200,
+    .rx_buffer_storage = 0, // Not implementing for UART2+
+    .tx_buffer_storage = 0,
+    .rx_ring_buffer = 0,
+    .tx_ring_buffer = 0,
+    .buffer_size = 0,
 };
 
 const UartPort_t UART_PORT_TXPA9_RXPA10 = {

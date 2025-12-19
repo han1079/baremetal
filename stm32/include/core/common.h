@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef volatile uint32_t REGADDR_T;
 

@@ -1,6 +1,7 @@
 #include <peripherals/uart.h>
 #include <peripherals/gpio.h>
 #include <core/m0_clock.h>
+#include <infra/ring_buffer.h>
 
 #define GET_OVERSAMPLE_MODE(uart) \
     GET_BIT((uart)->p_UART_BASE->CONTROL_REG_1, 15)
@@ -34,33 +35,40 @@ void __uart_configure_gpio_pins(UartPort_t uart_port){
 }
 
 void uart_init(UartPort_t uart_port) {
+    ring_buffer_init(uart_port.config->rx_ring_buffer, \
+        uart_port.config->rx_buffer_storage, \
+        uart_port.config->buffer_size);
+
+    ring_buffer_init(uart_port.config->tx_ring_buffer, \
+        uart_port.config->tx_buffer_storage, \
+        uart_port.config->buffer_size);
+
     __uart_enable_clock(uart_port.config);
     __uart_configure_gpio_pins(uart_port);
     __uart_configure_baud_rate(uart_port.config, uart_port.config->baud_rate);
     __uart_enable_transmitter(uart_port.config);
     __uart_enable_receiver(uart_port.config);
     __uart_enable_base(uart_port.config);
-}
-
-void uart_enable_interrupts(UartPort_t uart_port) {
-    __uart_enable_nvic_interrupt(uart_port.config);
     __uart_enable_rx_interrupt(uart_port.config);
-    __uart_enable_tx_interrupt(uart_port.config);
 }
 
-void uart_disable_interrupts(UartPort_t uart_port) {
-    __uart_disable_rx_interrupt(uart_port.config);
-    __uart_disable_tx_interrupt(uart_port.config);
+void uart_allow_interrupts(UartPort_t uart_port) {
+    __uart_enable_nvic_interrupt(uart_port.config);
+}
+
+void uart_disallow_interrupts(UartPort_t uart_port) {
     __uart_disable_nvic_interrupt(uart_port.config);
 }
 
 void uart_deinit(UartPort_t uart_port) {
-    uart_disable_interrupts(uart_port);
+    uart_disallow_interrupts(uart_port);
+    __uart_disable_rx_interrupt(uart_port.config);
     __uart_disable_base(uart_port.config);
     __uart_disable_receiver(uart_port.config);
     __uart_disable_transmitter(uart_port.config);
     __uart_disable_clock(uart_port.config);
 }
+
 
 
 // Read and Write Functions
@@ -149,10 +157,11 @@ the moment the TDR is empty, it'll ping TXE again, causing another interrupt,
 */
 
 // Single Byte Send. "Naive" Implementation
-void uart_send_byte(UartPort_t uart_port, uint8_t data) {
+void uart_send_byte_blocking(UartPort_t uart_port, uint8_t data) {
     while ((READ_TRANSMIT_REG_EMPTY_FLAG(uart_port.config) == 0));
     WRITE_BYTE_TO_TRANSMIT_REG(uart_port.config, data);
 }
+
 
 /* HOW UART RX WORKS
 
@@ -238,11 +247,110 @@ Basically - a very small event buffer for a very small operating system.
 */
 
 // Single Byte Receive. "Naive" Implementation
-uint8_t uart_receive_byte(UartPort_t uart_port) {
+uint8_t uart_receive_byte_blocking(UartPort_t uart_port) {
     while ((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart_port.config) == 0)); 
     return READ_BYTE_FROM_RECEIVE_REG(uart_port.config); 
 }
 
+
+void USART1_GLOBAL_Handler() {
+    // Check RXNE Flag
+    if (READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(&UART1)) {
+        uint8_t received_byte = READ_BYTE_FROM_RECEIVE_REG(&UART1);
+        push_to_ring_buffer(UART1.rx_ring_buffer, received_byte);
+    }
+
+    // Check TXE Flag
+    if (READ_TRANSMIT_REG_EMPTY_FLAG(&UART1)) {
+        uint8_t byte_to_tx;
+        if (pop_from_ring_buffer(UART1.tx_ring_buffer, &byte_to_tx)) {
+            WRITE_BYTE_TO_TRANSMIT_REG(&UART1, byte_to_tx);
+        } else {
+            // No more data to send, disable TXE interrupt
+            __uart_disable_tx_interrupt(&UART1);
+        }
+    }
+}
+
+void uart_write_byte_array(UartPort_t uart_port, uint8_t* data, uint32_t length) {
+    if ((READ_TRANSMIT_REG_EMPTY_FLAG(uart_port.config) != 0)) { return; } // UART not ready
+
+    ASSERT(__get_uart_nvic_interrupt_enable_status(uart_port.config) != 0); // NVIC Interrupts must be enabled
+    ASSERT(__get_uart_tx_interrupt_enable_status(uart_port.config) == 0); // TXE Interrupt must be disabled
+
+    for (uint32_t i = 0; i < length; i++) {
+        push_to_ring_buffer(uart_port.config->tx_ring_buffer, data[i]);
+    }
+
+    // By here, we KNOW that interrupts are enabled globally, and TXE shows the shift register is empty
+    // We enable TXE interrupts to kick off the first send.
+    __uart_enable_tx_interrupt(uart_port.config);
+}
+
+bool uart_drain_rx_buffer_until_delimiter(UartPort_t uart_port, uint8_t delimiter, uint8_t* dest, uint8_t dest_length) {
+    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart_port.config) == 0)); // Wait for last byte to arrive
+    ASSERT(dest_length > 0); // This messes up indexing. Crash out.
+
+    uint8_t index = 0;
+    uint8_t byte;
+    uint8_t max_index = dest_length - 1; // Leave space for null terminator
+    bool delimiter_found = false;
+
+    while (!delimiter_found && index <= max_index) {
+        // Case Logic: Pop, and only save if byte has sensible data in it.
+        if (pop_from_ring_buffer(uart_port.config->rx_ring_buffer, &byte)) 
+        { 
+            dest[index] = byte; 
+        }
+
+        // Logic variables for return.
+        if (byte == delimiter) { 
+            delimiter_found = true;
+        } else {
+            index++;
+        }
+    }
+
+    if(delimiter_found) { return true; }
+    return false; 
+}
+uint8_t uart_drain_rx_buffer_n_bytes(UartPort_t uart_port, uint8_t *dest, uint8_t dest_length, uint8_t num_bytes) {
+    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart_port.config) == 0)); // Wait for last byte to arrive
+    ASSERT(dest_length > 0); // This messes up indexing. Crash out.
+    if (num_bytes > dest_length) { return 0; } // This could be a mistake. Return with error.
+
+    uint8_t index = 0;
+    uint8_t byte;
+    
+    bool rb_empty = false;
+
+    while (!rb_empty && index < num_bytes) {
+        // Case Logic : Pop and write only if there's somethere there.
+        if (pop_from_ring_buffer(uart_port.config->rx_ring_buffer, &byte)) {
+            dest[index] = byte;
+            index++;
+        } else {
+            rb_empty = true;
+        }
+    }
+
+    // Index increments after assignment. Therefore - this tracks how many bytes 
+    // were actually written. Guaranteed to be <= num_bytes
+    return index;
+}
+
+bool uart_get_rx_buffer_next_byte(UartPort_t uart_port, uint8_t *dest) {
+    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart_port.config) == 0)); // Wait for last byte to arrive
+    uint8_t byte;
+
+    // Only grab from ring buffer if there's something there.
+    if (pop_from_ring_buffer(uart_port.config->rx_ring_buffer, &byte)) {
+        (*dest) = byte;
+        return true;
+    } else {
+        return false;
+    }
+}
 
 uint32_t __uart_get_clock_frequency(UartPortConfig_t* uart) {
     uint8_t clock_source = __uart_get_clock_source(uart);

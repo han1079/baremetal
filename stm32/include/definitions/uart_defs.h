@@ -3,6 +3,7 @@
 
 #include <core/common.h>
 #include <definitions/gpio_defs.h>
+#include <infra/ring_buffer.h>
 
 #define NVIC_UART1_OFFSET 27
 #define NVIC_UART2_OFFSET 28
@@ -60,6 +61,11 @@ typedef struct {
     REGADDR_T* p_APB_CLOCK_ENABLE_REG;
     uint8_t apb_clock_enable_offset;
     uint32_t baud_rate;
+    uint8_t* rx_buffer_storage;
+    uint8_t* tx_buffer_storage;
+    RingBuffer_t* rx_ring_buffer;
+    RingBuffer_t* tx_ring_buffer;
+    uint8_t buffer_size;
 } UartPortConfig_t; 
 
 

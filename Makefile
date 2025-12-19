@@ -12,6 +12,7 @@ ifeq ($(TARGET),stm32)
     TOOLCHAIN_PATH = $(PROJECT_ROOT)/tools/gcc/bin
     STD_INCLUDE_PATH = $(PROJECT_ROOT)/tools/gcc/lib/gcc/arm-none-eabi/10.3.1/include
     PROJ_INCLUDE_PATH = $(TARGET_DIR)/include
+	PROJ_SOURCE_PATH = $(TARGET_DIR)/src
     OPENOCD = $(PROJECT_ROOT)/tools/openocd/bin/openocd
     OPENOCD_PATH = $(PROJECT_ROOT)/tools/openocd/openocd/scripts
     
@@ -21,24 +22,25 @@ ifeq ($(TARGET),stm32)
     
     CCFLAGS = -mcpu=cortex-m0 -mthumb -g -O0 -Wall -I $(STD_INCLUDE_PATH) -I $(PROJ_INCLUDE_PATH)
     LDFLAGS = -mcpu=cortex-m0 -mthumb -nostdlib
-    LD = $(TARGET_DIR)/app.ld
+    LD = $(PROJ_SOURCE_PATH)/app.ld
     
-    APP_SRCS = $(TARGET_DIR)/app.c
+    APP_SRCS = $(PROJ_SOURCE_PATH)/src/app.c
 
-    CORE_SRCS = $(TARGET_DIR)/core/nvic.c \
-				$(TARGET_DIR)/core/m0_clock.c \
-				$(TARGET_DIR)/core/systick.c
+    CORE_SRCS = $(PROJ_SOURCE_PATH)/src/core/nvic.c \
+				$(PROJ_SOURCE_PATH)/src/core/m0_clock.c \
+				$(PROJ_SOURCE_PATH)/src/core/systick.c
 
-	CONFIG_SRCS = $(TARGET_DIR)/configs/setup.c
+	CONFIG_SRCS = $(PROJ_SOURCE_PATH)/src/configs/setup.c
 
-    PERIPH_SRCS = $(TARGET_DIR)/peripherals/gpio.c \
-                  $(TARGET_DIR)/peripherals/gpio_defs.c \
-                  $(TARGET_DIR)/peripherals/timer.c \
-                  $(TARGET_DIR)/peripherals/timer_defs.c \
-				  $(TARGET_DIR)/peripherals/uart.c \
-				  $(TARGET_DIR)/peripherals/uart_defs.c
+    PERIPH_SRCS = $(PROJ_SOURCE_PATH)/src/peripherals/gpio.c \
+                  $(PROJ_SOURCE_PATH)/src/peripherals/timer.c \
+				  $(PROJ_SOURCE_PATH)/src/peripherals/uart.c \
 
-    STARTUP_SRCS = $(TARGET_DIR)/startup.c
+	DEFINITION_SRCS = $(PROJ_SOURCE_PATH)/src/peripherals/gpio_defs.c \
+      	              $(PROJ_SOURCE_PATH)/src/peripherals/timer_defs.c \
+				  	  $(PROJ_SOURCE_PATH)/src/peripherals/uart_defs.c
+
+    STARTUP_SRCS = $(PROJ_SOURCE_PATH)/src/startup.c
     
     FLASH_CMD = $(OPENOCD) -s $(OPENOCD_PATH) -f interface/stlink.cfg -f target/stm32f0x.cfg -c "program $(BUILD_DIR)/app.elf verify reset exit"
 endif
@@ -52,8 +54,8 @@ BUILD_DIR = $(PROJECT_ROOT)/build/$(TARGET)
 ELF = $(BUILD_DIR)/app.elf
 BIN = $(BUILD_DIR)/app.bin
 
-SRCS = $(APP_SRCS) $(PERIPH_SRCS) $(STARTUP_SRCS) $(CORE_SRCS) $(CONFIG_SRCS)
-OBJS = $(patsubst $(TARGET_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+SRCS = $(APP_SRCS) $(PERIPH_SRCS) $(STARTUP_SRCS) $(CORE_SRCS) $(CONFIG_SRCS) $(DEFINITION_SRCS)
+OBJS = $(patsubst $(PROJ_SOURCE_PATH)%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 all: $(BIN)
 	@echo "Build complete for target: $(TARGET)"

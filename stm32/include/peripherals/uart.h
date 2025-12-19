@@ -3,6 +3,7 @@
 
 #include <core/common.h>
 #include <definitions/uart_defs.h>
+#include <infra/ring_buffer.h>
 
 // API 
 void uart_init(UartPort_t uart_port);
@@ -11,10 +12,13 @@ void uart_disable_interrupts(UartPort_t uart_port);
 void uart_deinit(UartPort_t uart_port);
 
 
-void uart_send_byte(UartPort_t uart_port, uint8_t data);
-uint8_t uart_receive_byte(UartPort_t uart_port);
-// void uart_send_data(UartPort_t uart_port, uint8_t* data, uint32_t length);
-// void uart_receive_data(UartPort_t uart_port, uint8_t* buffer, uint32_t length);
+void uart_send_byte_blocking(UartPort_t uart_port, uint8_t data);
+uint8_t uart_receive_byte_blocking(UartPort_t uart_port);
+
+void uart_write_byte_array(UartPort_t uart_port, uint8_t* data, uint32_t length);
+bool uart_drain_rx_buffer_until_delimiter(UartPort_t uart_port, uint8_t delimiter, uint8_t* dest, uint8_t dest_length);
+bool uart_get_rx_buffer_next_byte(UartPort_t uart_port, uint8_t* dest);
+uint8_t uart_drain_rx_buffer_n_bytes(UartPort_t uart_port, uint8_t* dest, uint8_t dest_length, uint8_t num_bytes);
 
 // Helper functions
 void __uart_configure_gpio_pins(UartPort_t uart_port);
@@ -80,6 +84,18 @@ static inline uint8_t __get_uart_word_size(UartPortConfig_t* uart){
 
 static inline uint8_t __get_uart_stop_bits(UartPortConfig_t* uart){
     return (uint8_t)((((uart)->p_UART_BASE->CONTROL_REG_2 >> 12) & 0b11UL));
+}
+
+static inline uint8_t __get_uart_nvic_interrupt_enable_status(UartPortConfig_t* uart){
+    return (uint8_t)(GET_BIT(*(uart->p_NVIC_ENABLE_REG), uart->nvic_enable_offset) & 0b1UL);
+}
+
+static inline uint8_t __get_uart_tx_interrupt_enable_status(UartPortConfig_t* uart){
+    return (uint8_t)(GET_BIT((uart)->p_UART_BASE->CONTROL_REG_1, 7) & 0b1UL);
+}
+
+static inline uint8_t __get_uart_rx_interrupt_enable_status(UartPortConfig_t* uart){
+    return (uint8_t)(GET_BIT((uart)->p_UART_BASE->CONTROL_REG_1, 5) & 0b1UL);
 }
 
 
