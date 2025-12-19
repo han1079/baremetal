@@ -1,4 +1,4 @@
-#include <peripherals/gpio.h>
+#include <drivers/gpio.h>
 
 
 void gpio_initialize_clock(void) {

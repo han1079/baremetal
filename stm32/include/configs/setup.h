@@ -6,8 +6,8 @@
 #include <core/systick.h>
 #include <core/interrupts.h>
 #include <core/nvic.h>
-#include <peripherals/gpio.h>
-#include <peripherals/timer.h>
+#include <drivers/gpio.h>
+#include <drivers/timer.h>
 
 void high_speed_setup(void);
 void standard_speed_setup(void);

@@ -22,25 +22,27 @@ ifeq ($(TARGET),stm32)
     
     CCFLAGS = -mcpu=cortex-m0 -mthumb -g -O0 -Wall -I $(STD_INCLUDE_PATH) -I $(PROJ_INCLUDE_PATH)
     LDFLAGS = -mcpu=cortex-m0 -mthumb -nostdlib
-    LD = $(PROJ_SOURCE_PATH)/app.ld
+    LD = $(PROJ_SOURCE_PATH)/app/app.ld
     
-    APP_SRCS = $(PROJ_SOURCE_PATH)/src/app.c
+    APP_SRCS = $(PROJ_SOURCE_PATH)/app/app.c
 
-    CORE_SRCS = $(PROJ_SOURCE_PATH)/src/core/nvic.c \
-				$(PROJ_SOURCE_PATH)/src/core/m0_clock.c \
-				$(PROJ_SOURCE_PATH)/src/core/systick.c
+    CORE_SRCS = $(PROJ_SOURCE_PATH)/core/nvic.c \
+				$(PROJ_SOURCE_PATH)/core/m0_clock.c \
+				$(PROJ_SOURCE_PATH)/core/systick.c
 
-	CONFIG_SRCS = $(PROJ_SOURCE_PATH)/src/configs/setup.c
+	CONFIG_SRCS = $(PROJ_SOURCE_PATH)/configs/setup.c
 
-    PERIPH_SRCS = $(PROJ_SOURCE_PATH)/src/peripherals/gpio.c \
-                  $(PROJ_SOURCE_PATH)/src/peripherals/timer.c \
-				  $(PROJ_SOURCE_PATH)/src/peripherals/uart.c \
+    DRIVER_SRCS = $(PROJ_SOURCE_PATH)/drivers/gpio.c \
+                  $(PROJ_SOURCE_PATH)/drivers/timer.c \
+				  $(PROJ_SOURCE_PATH)/drivers/uart.c \
 
-	DEFINITION_SRCS = $(PROJ_SOURCE_PATH)/src/peripherals/gpio_defs.c \
-      	              $(PROJ_SOURCE_PATH)/src/peripherals/timer_defs.c \
-				  	  $(PROJ_SOURCE_PATH)/src/peripherals/uart_defs.c
+	DEFINITION_SRCS = $(PROJ_SOURCE_PATH)/definitions/gpio_defs.c \
+      	              $(PROJ_SOURCE_PATH)/definitions/timer_defs.c \
+				  	  $(PROJ_SOURCE_PATH)/definitions/uart_defs.c
 
-    STARTUP_SRCS = $(PROJ_SOURCE_PATH)/src/startup.c
+	INFRASTRUCTURE_SRCS = $(PROJ_SOURCE_PATH)/infrastructure/ring_buffer.c
+
+    STARTUP_SRCS = $(PROJ_SOURCE_PATH)/startup/startup.c
     
     FLASH_CMD = $(OPENOCD) -s $(OPENOCD_PATH) -f interface/stlink.cfg -f target/stm32f0x.cfg -c "program $(BUILD_DIR)/app.elf verify reset exit"
 endif
@@ -54,15 +56,15 @@ BUILD_DIR = $(PROJECT_ROOT)/build/$(TARGET)
 ELF = $(BUILD_DIR)/app.elf
 BIN = $(BUILD_DIR)/app.bin
 
-SRCS = $(APP_SRCS) $(PERIPH_SRCS) $(STARTUP_SRCS) $(CORE_SRCS) $(CONFIG_SRCS) $(DEFINITION_SRCS)
-OBJS = $(patsubst $(PROJ_SOURCE_PATH)%.c,$(BUILD_DIR)/%.o,$(SRCS))
+SRCS = $(APP_SRCS) $(DRIVER_SRCS) $(STARTUP_SRCS) $(CORE_SRCS) $(CONFIG_SRCS) $(DEFINITION_SRCS) $(INFRASTRUCTURE_SRCS)
+OBJS = $(patsubst $(PROJ_SOURCE_PATH)%.c,$(BUILD_DIR)%.o,$(SRCS))
 
 all: $(BIN)
 	@echo "Build complete for target: $(TARGET)"
 	$(SIZE) $(ELF)
 
 # Universal compile rule
-$(BUILD_DIR)/%.o: $(TARGET_DIR)/%.c
+$(BUILD_DIR)/%.o: $(PROJ_SOURCE_PATH)/%.c
 	@mkdir -p $(dir $@)
 	@echo "Compiling $< ..."
 	$(CC) $(CCFLAGS) -c $< -o $@

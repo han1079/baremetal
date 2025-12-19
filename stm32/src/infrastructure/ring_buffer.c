@@ -1,4 +1,4 @@
-#include <infra/ring_buffer.h>
+#include <infrastructure/ring_buffer.h>
 #include <core/common.h>
 #include <core/interrupts.h>
 

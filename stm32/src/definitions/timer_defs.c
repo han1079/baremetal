@@ -1,4 +1,4 @@
-#include <peripherals/timer.h>
+#include <definitions/timer_defs.h>
 
 #define TIM1_BASE 0x40012C00UL
 #define TIM2_BASE 0x40000000UL

@@ -1,7 +1,6 @@
-#include <peripherals/uart.h>
-#include <peripherals/gpio.h>
+#include <drivers/uart.h>
+#include <drivers/gpio.h>
 #include <core/m0_clock.h>
-#include <infra/ring_buffer.h>
 
 #define GET_OVERSAMPLE_MODE(uart) \
     GET_BIT((uart)->p_UART_BASE->CONTROL_REG_1, 15)

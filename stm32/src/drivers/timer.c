@@ -1,4 +1,4 @@
-#include <peripherals/timer.h>
+#include <drivers/timer.h>
 
 
 // typedef struct {

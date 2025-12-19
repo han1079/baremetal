@@ -3,7 +3,7 @@
 
 #include <core/common.h>
 #include <definitions/gpio_defs.h>
-#include <infra/ring_buffer.h>
+#include <infrastructure/ring_buffer.h>
 
 #define NVIC_UART1_OFFSET 27
 #define NVIC_UART2_OFFSET 28
@@ -78,14 +78,9 @@ typedef struct {
     gpio_t* p_rx_pin;
 } UartPort_t;
 
-extern const UartPortConfig_t UART1;
-extern const UartPortConfig_t UART2;
-extern const UartPortConfig_t UART3;
-extern const UartPortConfig_t UART4;
-extern const UartPortConfig_t UART5;
-extern const UartPortConfig_t UART6;
-extern const UartPortConfig_t UART7;
-extern const UartPortConfig_t UART8;
+extern UartPortConfig_t UART1;
+extern UartPortConfig_t UART2;
+extern UartPortConfig_t UART3;
 
 extern const UartPort_t UART_PORT_TXPA9_RXPA10;
 

@@ -2,7 +2,7 @@
 #define DISPATCHER_H
 
 #include <core/common.h>
-#include <peripherals/uart.h>
+#include <drivers/uart.h>
 
 typedef void (*BusDataGetter)(uint8_t* data, uint8_t data_len);
 

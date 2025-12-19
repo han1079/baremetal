@@ -1,6 +1,6 @@
-#include <peripherals/gpio.h>
+#include <drivers/gpio.h>
 #include <configs/setup.h>
-#include <peripherals/uart.h>
+#include <drivers/uart.h>
 
 void setup(void) {
     standard_speed_setup();

@@ -3,7 +3,6 @@
 
 #include <core/common.h>
 #include <definitions/uart_defs.h>
-#include <infra/ring_buffer.h>
 
 // API 
 void uart_init(UartPort_t uart_port);
