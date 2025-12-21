@@ -1,5 +1,5 @@
 #include <core/systick.h>
-#include <core/m0_clock.h>
+#include <core/clock.h>
 #include <core/interrupts.h>
 
 #define SYSTICK_VALUE_MASK 0x00FFFFFFUL

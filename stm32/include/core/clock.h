@@ -1,5 +1,5 @@
-#ifndef M0_CLOCK_H
-#define M0_CLOCK_H
+#ifndef CLOCK_H
+#define CLOCK_H
 
 #include <core/common.h>
 
@@ -24,4 +24,4 @@ uint32_t get_apb_prescalar_divider(void);
 uint32_t get_apb1_prescaler_divider(void);
 uint32_t get_apb2_prescaler_divider(void);
 
-#endif //M0_CLOCK_H
+#endif //CLOCK_H

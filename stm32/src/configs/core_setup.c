@@ -1,4 +1,4 @@
-#include <configs/setup.h>
+#include <configs/core_setup.h>
 
 void gpio_setup(void) {
     gpio_initialize_clock();

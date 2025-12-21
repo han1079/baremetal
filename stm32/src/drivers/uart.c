@@ -1,6 +1,7 @@
+#include "definitions/uart_defs.h"
 #include <drivers/uart.h>
 #include <drivers/gpio.h>
-#include <core/m0_clock.h>
+#include <core/clock.h>
 
 #define GET_OVERSAMPLE_MODE(uart) \
     GET_BIT((uart)->p_UART_BASE->CONTROL_REG_1, 15)
@@ -271,23 +272,25 @@ void USART1_GLOBAL_Handler() {
     }
 }
 
-void uart_write_byte_array(UartPort_t uart_port, uint8_t* data, uint32_t length) {
-    if ((READ_TRANSMIT_REG_EMPTY_FLAG(uart_port.config) != 0)) { return; } // UART not ready
+void uart_write_byte_array(UartDriver_t* uart, ByteSpan_t p_data) {
+    uint8_t* data = p_data.bytes;
+    uint8_t length = p_data.count;
+    if ((READ_TRANSMIT_REG_EMPTY_FLAG(uart) != 0)) { return; } // UART not ready
 
-    ASSERT(__get_uart_nvic_interrupt_enable_status(uart_port.config) != 0); // NVIC Interrupts must be enabled
-    ASSERT(__get_uart_tx_interrupt_enable_status(uart_port.config) == 0); // TXE Interrupt must be disabled
+    ASSERT(__get_uart_nvic_interrupt_enable_status(uart) != 0); // NVIC Interrupts must be enabled
+    ASSERT(__get_uart_tx_interrupt_enable_status(uart) == 0); // TXE Interrupt must be disabled
 
     for (uint32_t i = 0; i < length; i++) {
-        push_to_ring_buffer(uart_port.config->tx_ring_buffer, data[i]);
+        push_to_ring_buffer(uart->tx_ring_buffer, data[i]);
     }
 
     // By here, we KNOW that interrupts are enabled globally, and TXE shows the shift register is empty
     // We enable TXE interrupts to kick off the first send.
-    __uart_enable_tx_interrupt(uart_port.config);
+    __uart_enable_tx_interrupt(uart);
 }
 
-bool uart_drain_rx_buffer_until_delimiter(UartPort_t uart_port, uint8_t delimiter, uint8_t* dest, uint8_t dest_length) {
-    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart_port.config) == 0)); // Wait for last byte to arrive
+bool uart_drain_rx_buffer_until_delimiter(UartDriver_t* uart, uint8_t delimiter, uint8_t* dest, uint8_t dest_length) {
+    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart) == 0)); // Wait for last byte to arrive
     ASSERT(dest_length > 0); // This messes up indexing. Crash out.
 
     uint8_t index = 0;
@@ -297,7 +300,7 @@ bool uart_drain_rx_buffer_until_delimiter(UartPort_t uart_port, uint8_t delimite
 
     while (!delimiter_found && index <= max_index) {
         // Case Logic: Pop, and only save if byte has sensible data in it.
-        if (pop_from_ring_buffer(uart_port.config->rx_ring_buffer, &byte)) 
+        if (pop_from_ring_buffer(uart->rx_ring_buffer, &byte)) 
         { 
             dest[index] = byte; 
         }
@@ -313,8 +316,8 @@ bool uart_drain_rx_buffer_until_delimiter(UartPort_t uart_port, uint8_t delimite
     if(delimiter_found) { return true; }
     return false; 
 }
-uint8_t uart_drain_rx_buffer_n_bytes(UartPort_t uart_port, uint8_t *dest, uint8_t dest_length, uint8_t num_bytes) {
-    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart_port.config) == 0)); // Wait for last byte to arrive
+uint8_t uart_drain_rx_buffer_n_bytes(UartDriver_t* uart, uint8_t *dest, uint8_t dest_length, uint8_t num_bytes) {
+    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart) == 0)); // Wait for last byte to arrive
     ASSERT(dest_length > 0); // This messes up indexing. Crash out.
     if (num_bytes > dest_length) { return 0; } // This could be a mistake. Return with error.
 
@@ -325,7 +328,7 @@ uint8_t uart_drain_rx_buffer_n_bytes(UartPort_t uart_port, uint8_t *dest, uint8_
 
     while (!rb_empty && index < num_bytes) {
         // Case Logic : Pop and write only if there's somethere there.
-        if (pop_from_ring_buffer(uart_port.config->rx_ring_buffer, &byte)) {
+        if (pop_from_ring_buffer(uart->rx_ring_buffer, &byte)) {
             dest[index] = byte;
             index++;
         } else {
@@ -338,12 +341,12 @@ uint8_t uart_drain_rx_buffer_n_bytes(UartPort_t uart_port, uint8_t *dest, uint8_
     return index;
 }
 
-bool uart_get_rx_buffer_next_byte(UartPort_t uart_port, uint8_t *dest) {
-    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart_port.config) == 0)); // Wait for last byte to arrive
+bool uart_get_rx_buffer_next_byte(UartDriver_t* uart, uint8_t *dest) {
+    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart) == 0)); // Wait for last byte to arrive
     uint8_t byte;
 
     // Only grab from ring buffer if there's something there.
-    if (pop_from_ring_buffer(uart_port.config->rx_ring_buffer, &byte)) {
+    if (pop_from_ring_buffer(uart->rx_ring_buffer, &byte)) {
         (*dest) = byte;
         return true;
     } else {
@@ -351,7 +354,15 @@ bool uart_get_rx_buffer_next_byte(UartPort_t uart_port, uint8_t *dest) {
     }
 }
 
-uint32_t __uart_get_clock_frequency(UartPortConfig_t* uart) {
+uint8_t get_uart_rx_buffer_count(UartDriver_t *uart) {
+    return uart->rx_ring_buffer->count;
+}
+
+uint8_t get_uart_tx_buffer_count(UartDriver_t* uart) {
+    return uart->tx_ring_buffer->count;
+}
+
+uint32_t __uart_get_clock_frequency(UartDriver_t* uart) {
     uint8_t clock_source = __uart_get_clock_source(uart);
     switch (clock_source) {
         case 0b00: // PCLK
@@ -374,7 +385,7 @@ uint32_t __uart_get_clock_frequency(UartPortConfig_t* uart) {
     }
 }
 
-void __uart_configure_baud_rate(UartPortConfig_t* uart, uint32_t baud) {
+void __uart_configure_baud_rate(UartDriver_t* uart, uint32_t baud) {
     uint32_t uart_clock_frequency = __uart_get_clock_frequency(uart);
     uint8_t oversample_by_8 = GET_OVERSAMPLE_MODE(uart);
 

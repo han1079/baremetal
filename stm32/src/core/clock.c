@@ -1,4 +1,4 @@
-#include <core/m0_clock.h>
+#include <core/clock.h>
 
 uint32_t ClockConfigReg1Value;
 uint32_t ClockControlReg1Value;

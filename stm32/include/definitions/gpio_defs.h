@@ -88,18 +88,18 @@ typedef struct {
     gpio_af_lut_t* af;
 } gpio_t;
 
-extern const gpio_t PA1;
-extern const gpio_t PA2;
-extern const gpio_t PA3;
-extern const gpio_t PA4;
-extern const gpio_t PA5;
-extern const gpio_t PA6;
-extern const gpio_t PA7;
-extern const gpio_t PA8;
-extern const gpio_t PA9;
-extern const gpio_t PA10;
-extern const gpio_t PA11;
-extern const gpio_t PA12;
-extern const gpio_t PA13;
+extern gpio_t PA1;
+extern gpio_t PA2;
+extern gpio_t PA3;
+extern gpio_t PA4;
+extern gpio_t PA5;
+extern gpio_t PA6;
+extern gpio_t PA7;
+extern gpio_t PA8;
+extern gpio_t PA9;
+extern gpio_t PA10;
+extern gpio_t PA11;
+extern gpio_t PA12;
+extern gpio_t PA13;
 
 #endif //GPIO_DEFS_H

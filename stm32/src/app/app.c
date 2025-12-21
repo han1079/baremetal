@@ -1,12 +1,16 @@
 #include <drivers/gpio.h>
-#include <configs/setup.h>
+#include <configs/core_setup.h>
+#include <configs/system_setup.h>
 #include <drivers/uart.h>
+#include <services/uart_console.h>
+#include <core/dispatcher.h>
 
 void setup(void) {
     standard_speed_setup();
     uart_init(UART_PORT_TXPA9_RXPA10);
     set_pin_mode(PA5, PINMODE_OUTPUT);
     set_pin_pull(PA5, PIN_PULL_DOWN);
+    system_setup();
 }
 
 void poll_and_blink(void) {
@@ -25,7 +29,7 @@ void poll_and_blink(void) {
 int main(void) {
     setup();
     while(1) {
-        poll_and_blink();
+        dispatch_uart(&UART1, data_framers, frame_vtable); 
     }
     return 0;
 }

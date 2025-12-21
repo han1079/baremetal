@@ -66,21 +66,21 @@ typedef struct {
     RingBuffer_t* rx_ring_buffer;
     RingBuffer_t* tx_ring_buffer;
     uint8_t buffer_size;
-} UartPortConfig_t; 
+} UartDriver_t; 
 
 
 // Create a struct to hold all configuration for a UART port
 // This holds a pointer to the register config struct
 // as well as TX/RX pin information and baud rate
 typedef struct {
-    UartPortConfig_t* config;
+    UartDriver_t* config;
     gpio_t* p_tx_pin;
     gpio_t* p_rx_pin;
 } UartPort_t;
 
-extern UartPortConfig_t UART1;
-extern UartPortConfig_t UART2;
-extern UartPortConfig_t UART3;
+extern UartDriver_t UART1;
+extern UartDriver_t UART2;
+extern UartDriver_t UART3;
 
 extern const UartPort_t UART_PORT_TXPA9_RXPA10;
 

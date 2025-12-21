@@ -40,6 +40,7 @@ static inline void set_register(REGADDR_T* reg, uint8_t offset, uint8_t num_bits
     (*reg) |= clean_data;
 }
 
+#define GET_FLAT_IDX(i,j,jtotal) (i*jtotal + j)  
 
 #define RCC_BASE 0x40021000UL
 typedef struct {

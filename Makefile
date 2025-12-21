@@ -27,20 +27,25 @@ ifeq ($(TARGET),stm32)
     APP_SRCS = $(PROJ_SOURCE_PATH)/app/app.c
 
     CORE_SRCS = $(PROJ_SOURCE_PATH)/core/nvic.c \
-				$(PROJ_SOURCE_PATH)/core/m0_clock.c \
-				$(PROJ_SOURCE_PATH)/core/systick.c
+				$(PROJ_SOURCE_PATH)/core/clock.c \
+				$(PROJ_SOURCE_PATH)/core/systick.c \
+				$(PROJ_SOURCE_PATH)/core/dispatcher.c
 
-	CONFIG_SRCS = $(PROJ_SOURCE_PATH)/configs/setup.c
+	CONFIG_SRCS = $(PROJ_SOURCE_PATH)/configs/core_setup.c \
+				  $(PROJ_SOURCE_PATH)/configs/system_setup.c
 
     DRIVER_SRCS = $(PROJ_SOURCE_PATH)/drivers/gpio.c \
                   $(PROJ_SOURCE_PATH)/drivers/timer.c \
-				  $(PROJ_SOURCE_PATH)/drivers/uart.c \
+				  $(PROJ_SOURCE_PATH)/drivers/uart.c 
 
 	DEFINITION_SRCS = $(PROJ_SOURCE_PATH)/definitions/gpio_defs.c \
       	              $(PROJ_SOURCE_PATH)/definitions/timer_defs.c \
 				  	  $(PROJ_SOURCE_PATH)/definitions/uart_defs.c
 
-	INFRASTRUCTURE_SRCS = $(PROJ_SOURCE_PATH)/infrastructure/ring_buffer.c
+	INFRASTRUCTURE_SRCS = $(PROJ_SOURCE_PATH)/infrastructure/ring_buffer.c \
+						  $(PROJ_SOURCE_PATH)/infrastructure/data_framer.c
+						
+	SERVICE_SRCS = $(PROJ_SOURCE_PATH)/services/uart_console.c
 
     STARTUP_SRCS = $(PROJ_SOURCE_PATH)/startup/startup.c
     
@@ -56,7 +61,7 @@ BUILD_DIR = $(PROJECT_ROOT)/build/$(TARGET)
 ELF = $(BUILD_DIR)/app.elf
 BIN = $(BUILD_DIR)/app.bin
 
-SRCS = $(APP_SRCS) $(DRIVER_SRCS) $(STARTUP_SRCS) $(CORE_SRCS) $(CONFIG_SRCS) $(DEFINITION_SRCS) $(INFRASTRUCTURE_SRCS)
+SRCS = $(APP_SRCS) $(DRIVER_SRCS) $(STARTUP_SRCS) $(CORE_SRCS) $(CONFIG_SRCS) $(DEFINITION_SRCS) $(INFRASTRUCTURE_SRCS) $(SERVICE_SRCS)
 OBJS = $(patsubst $(PROJ_SOURCE_PATH)%.c,$(BUILD_DIR)%.o,$(SRCS))
 
 all: $(BIN)
