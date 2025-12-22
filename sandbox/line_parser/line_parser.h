@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LINE_LEN_MAX 64
+#define BUFFER_LEN_MAX 64
 
 typedef struct {
-    uint8_t current_line[LINE_LEN_MAX];
+    uint8_t current_line[BUFFER_LEN_MAX];
     uint8_t current_idx;
     bool overflow;
     bool newline_found;

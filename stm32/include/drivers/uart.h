@@ -17,7 +17,7 @@ uint8_t uart_receive_byte_blocking(UartPort_t uart_port);
 
 void uart_write_byte_array(UartDriver_t* uart, ByteSpan_t p_data);
 bool uart_drain_rx_buffer_until_delimiter(UartDriver_t* uart, uint8_t delimiter, uint8_t* dest, uint8_t dest_length);
-bool uart_get_rx_buffer_next_byte(UartDriver_t* uart, uint8_t* dest);
+bool uart_get_rx_buffer_next_byte(void* driver, uint8_t* dest);
 uint8_t uart_drain_rx_buffer_n_bytes(UartDriver_t* uart, uint8_t* dest, uint8_t dest_length, uint8_t num_bytes);
 
 // Buffer Helper functions

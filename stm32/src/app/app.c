@@ -29,7 +29,8 @@ void poll_and_blink(void) {
 int main(void) {
     setup();
     while(1) {
-        dispatch_uart(&UART1, data_framers, frame_vtable); 
+        dispatch_uart((void*)&(uart1_dispatcher)); 
+        delay_ms_interruptible(10);
     }
     return 0;
 }

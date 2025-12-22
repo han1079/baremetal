@@ -3,41 +3,52 @@
 #include <services/uart_console.h>
 #include <drivers/uart.h>
 #include <infrastructure/line_framer.h>
-#include <infrastructure/data_frame_protocol.h>
+#include <infrastructure/comms_protocol.h>
 
 
+void dispatcher_init(Dispatcher_t* dispatcher, 
+                     ByteSpan_t* cache, 
+                     DataRoute_t* routing_table, 
+                     void* driver,
+                     TryIngestByteFromDriver driver_ingest) {
 
-void dispatch_uart(UartDriver_t* uart, DataFramer_t** framers, FrameCallbackFailable* routing_table) {
+    dispatcher->routing_table = routing_table;
+    dispatcher->driver = driver;
+    dispatcher->cache = cache;
+    dispatcher->driver_ingest = driver_ingest;
+}
+
+void bind_data_router(Dispatcher_t* dispatcher, DataRoute_t router) {
+    dispatcher->routing_table[dispatcher->rtbl_count] = router;
+    (dispatcher->rtbl_count)++;
+}
+
+void dispatch_uart(void* state) {
+    Dispatcher_t* dispatcher = (Dispatcher_t*)state;
+    UartDriver_t* uart = dispatcher->driver;
     // If empty - return that we grabbed zero bytes.
     if(get_uart_rx_buffer_count(uart) == 0) { return; }
-    uint8_t tmp_buffer[64];
-    uint8_t used_buffer_len = 0;
 
-    while(!uart_get_rx_buffer_next_byte(uart, &tmp_buffer[used_buffer_len])) {
-        used_buffer_len++;
+    ByteSpan_t* cache = dispatcher->cache;
+    TryIngestByteFromDriver data_ingester = dispatcher->driver_ingest;
+
+    while(!data_ingester(uart, &cache->bytes[cache->count])) {
+        (cache->count)++;
     }
 
-    ByteSpan_t tmp_bytes = {.bytes = tmp_buffer, .count = used_buffer_len};
 
-    void* tmp_stage;
-    for (int i = 0; i < TOTAL_FRAMER_COUNT; i++) {
-        tmp_stage = (void*)framers[i]->state;
-        framers[i]->ingest_new_data(tmp_stage, tmp_bytes); 
-    }
+    ServiceCallback_t scb;
+    Framer_t fr;
+    uint8_t route_buf[64];
+    ByteSpan_t router_cache = {.bytes = route_buf, .count = 0};
 
-    ByteSpan_Failable_t tmp_frame;
-    bool buffer_notempty = true;
-    for (int sid = 0; sid < TOTAL_SERVICE_COUNT; sid++) {
-        for (int fid = 0; fid < TOTAL_FRAMER_COUNT; fid++) {
-            tmp_stage = (void*)framers[fid]->state;
-            if (framers[fid]->service_routing_table[sid] == 1) {
-                while(buffer_notempty){
-                    tmp_frame = framers[fid]->process_state(tmp_stage);
-                    buffer_notempty = tmp_frame.result;
-                    if (buffer_notempty) {
-                        routing_table[GET_FLAT_IDX(fid, sid, TOTAL_SERVICE_COUNT)].callback(tmp_frame);
-                    }
-                }
+    for (int i = 0; i < dispatcher->rtbl_count; i++) {
+        scb = dispatcher->routing_table[i].service_cb;
+        fr = dispatcher->routing_table[i].framer;
+        fr.vtbl.ingest(fr.state, *cache);
+        if(scb.cb_enabled){
+            while(!(fr.vtbl.try_to_process_and_write(fr.state, &router_cache))) {
+                scb.try_to_process(&router_cache); 
             }
         }
     }

@@ -1,52 +1,73 @@
-#include "infrastructure/data_frame_protocol.h"
+#include "infrastructure/comms_protocol.h"
+#include "infrastructure/passthru_framer.h"
+#include "services/uart_console.h"
 #include <configs/system_setup.h> 
 
-// Framer State Variable Declaration 
-LineFramerState_t* p_line_framer_state;
-PassthruFramerState_t* p_passthru_framer_state;
+Dispatcher_t uart1_dispatcher;
+DataRoute_t uart1_routing_table[TOTAL_FRAMER_COUNT * TOTAL_SERVICE_COUNT];
 
-// Data Framer Objects
-DataFramer_t* p_line_framer;
-DataFramer_t* p_passthru_framer;
+FramerFcns_t LineFramerFcns = {
+    .ingest = line_framer_ingest,
+    .try_to_process_and_write = line_framer_try_to_process_and_write,
+};
 
-// These need to get bound to function handles first
-TwoWildcardIn_VoidOut_VTableEntry_t frame_binding_vtable[TOTAL_FRAMER_COUNT];
+FramerFcns_t PassthruFramersFcns = {
+.ingest = passthru_framer_ingest,
+    .try_to_process_and_write = passthru_framer_try_to_process_and_write,
+};
 
-// This needs to get populated after proper initialization
-DataFramer_t* data_framers[TOTAL_FRAMER_COUNT];
+Framer_t LineFramer;
+Framer_t PassthruFramer;
 
-// Routing table function handles need to get bound initially
-BytesInFailable_VoidOut_VTableEntry_t frame_vtable[TOTAL_FRAMER_COUNT*TOTAL_SERVICE_COUNT];
+ServiceCallback_t ConsoleLineCallback = {
+    .try_to_process = console_rx_callback_newline,
+    .cb_enabled = false,
+};
+
+ServiceCallback_t ConsolePassthruCallback = {
+    .try_to_process = console_rx_callback_passthru,
+    .cb_enabled = false,
+};
+
+LineFramerState_t LineFramerState;
+PassthruFramerState_t PassthruFramerState;
+
+Console_t uart1_console;
+uint8_t uart1_console_buffer[BUFFER_LEN_MAX];
+uint8_t dispatcher_buffer[BUFFER_LEN_MAX];
+
+ByteSpan_t dispatcher_uart1_cache = {
+    .bytes = dispatcher_buffer,
+    .count = 0,
+};
+
+ByteSpan_t uart1_console_cache = {
+    .bytes = uart1_console_buffer,
+    .count = 0,
+};
 
 void system_setup() {
-    __populate_vtables();
-    __setup_data_framers();
+    __setup_framers();
+    __setup_services();
 }
 
-void __populate_vtables() {
-    
-    frame_vtable[GET_FLAT_IDX(FRAMER_PASSTHRU, SERVICE_ID_CONSOLE, TOTAL_SERVICE_COUNT)].callback = console_rx_callback_newline;
-    frame_vtable[GET_FLAT_IDX(FRAMER_PASSTHRU, SERVICE_ID_CONSOLE, TOTAL_SERVICE_COUNT)].enabled = true;
-
-    frame_vtable[GET_FLAT_IDX(FRAMER_NEWLINE, SERVICE_ID_CONSOLE, TOTAL_SERVICE_COUNT)].callback = console_rx_callback_passthru;
-    frame_vtable[GET_FLAT_IDX(FRAMER_NEWLINE, SERVICE_ID_CONSOLE, TOTAL_SERVICE_COUNT)].enabled = true;
-
-    frame_binding_vtable[FRAMER_PASSTHRU].bind = bind_passthru_framer;
-    frame_binding_vtable[FRAMER_PASSTHRU].object1 = (void*)(p_passthru_framer);
-    frame_binding_vtable[FRAMER_PASSTHRU].object2 = (void*)(p_passthru_framer_state);
-
-    frame_binding_vtable[FRAMER_NEWLINE].bind = bind_line_framer;
-    frame_binding_vtable[FRAMER_NEWLINE].object1 = (void*)(p_line_framer);
-    frame_binding_vtable[FRAMER_NEWLINE].object2 = (void*)(p_line_framer_state);
+void __setup_framers() {
+    line_framer_init(&LineFramer, &LineFramerFcns, (void*)&(LineFramerState));
+    passthru_framer_init(&PassthruFramer, &PassthruFramersFcns, (void*)&(PassthruFramerState));
 }
 
-void __setup_data_framers() {
-    data_framers[FRAMER_PASSTHRU] = p_passthru_framer;
-    data_framers[FRAMER_NEWLINE] = p_line_framer;
+void __setup_services() {
+    dispatcher_init(&uart1_dispatcher, 
+                    &dispatcher_uart1_cache, 
+                    &uart1_routing_table[0], 
+                    (void*)&UART1, 
+                    uart_get_rx_buffer_next_byte);
 
-    for (int i = 0; i < TOTAL_FRAMER_COUNT; i++) {
-        frame_binding_vtable[i].bind(frame_binding_vtable[i].object1,
-                                     frame_binding_vtable[i].object2);
-    }
+    console_init(&uart1_console, &UART1, &uart1_console_cache);   
+
+    DataRoute_t dr;
+    dr = bind_console(&ConsolePassthruCallback, &PassthruFramer, FRAMER_PASSTHRU);
+    bind_data_router(&uart1_dispatcher, dr);
+    dr = bind_console(&ConsoleLineCallback, &LineFramer, FRAMER_NEWLINE);
+    bind_data_router(&uart1_dispatcher, dr);
 }
-

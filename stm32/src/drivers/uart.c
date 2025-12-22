@@ -341,7 +341,8 @@ uint8_t uart_drain_rx_buffer_n_bytes(UartDriver_t* uart, uint8_t *dest, uint8_t 
     return index;
 }
 
-bool uart_get_rx_buffer_next_byte(UartDriver_t* uart, uint8_t *dest) {
+bool uart_get_rx_buffer_next_byte(void* driver, uint8_t* dest) {
+    UartDriver_t* uart = (UartDriver_t*)driver;
     while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart) == 0)); // Wait for last byte to arrive
     uint8_t byte;
 

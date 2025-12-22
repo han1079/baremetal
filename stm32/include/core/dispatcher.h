@@ -3,9 +3,15 @@
 
 #include <core/common.h>
 #include <drivers/uart.h>
-#include <infrastructure/data_frame_protocol.h>
+#include <infrastructure/comms_protocol.h>
 
+void dispatcher_init(Dispatcher_t* dispatcher, 
+                     ByteSpan_t* cache, 
+                     DataRoute_t* routing_table, 
+                     void* driver,
+                     TryIngestByteFromDriver driver_ingest);
 
-void dispatch_uart(UartDriver_t* uart, DataFramer_t** framers, FrameCallbackFailable* routing_table);
+void bind_data_router(Dispatcher_t* dispatcher, DataRoute_t router);
+void dispatch_uart(void* state);
 
 #endif //DISPATCHER_H

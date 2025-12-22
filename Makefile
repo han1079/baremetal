@@ -43,7 +43,8 @@ ifeq ($(TARGET),stm32)
 				  	  $(PROJ_SOURCE_PATH)/definitions/uart_defs.c
 
 	INFRASTRUCTURE_SRCS = $(PROJ_SOURCE_PATH)/infrastructure/ring_buffer.c \
-						  $(PROJ_SOURCE_PATH)/infrastructure/data_framer.c
+						  $(PROJ_SOURCE_PATH)/infrastructure/line_framer.c \
+						  $(PROJ_SOURCE_PATH)/infrastructure/passthru_framer.c
 						
 	SERVICE_SRCS = $(PROJ_SOURCE_PATH)/services/uart_console.c
 

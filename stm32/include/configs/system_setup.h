@@ -1,35 +1,39 @@
 #ifndef SYSTEM_SETUP_H
 #define SYSTEM_SETUP_H
 
-#include <infrastructure/data_frame_protocol.h> 
+#include <infrastructure/comms_protocol.h> 
 #include <infrastructure/line_framer.h> 
-#include <infrastructure/passthrough_framer.h> 
+#include <infrastructure/passthru_framer.h> 
 
 #include <core/dispatcher.h> 
 #include <core/common.h>
 
 #include <services/uart_console.h>
 
-// Framer State Variable Declaration 
-extern LineFramerState_t* p_line_framer_state;
-extern PassthruFramerState_t* p_passthru_framer_state;
+extern Dispatcher_t uart1_dispatcher;
+extern DataRoute_t uart1_routing_table[TOTAL_FRAMER_COUNT * TOTAL_SERVICE_COUNT];
 
-// Data Framer Objects
-extern DataFramer_t* p_line_framer;
-extern DataFramer_t* p_passthru_framer;
+extern FramerFcns_t LineFramerFcns;
+extern FramerFcns_t PassthruFramersFcns;
 
-// These need to get bound to function handles first
-extern TwoWildcardIn_VoidOut_VTableEntry_t frame_binding_vtable[TOTAL_FRAMER_COUNT];
+extern Framer_t LineFramer;
+extern Framer_t PassthruFramer;
 
-// This needs to get populated after proper initialization
-extern DataFramer_t* data_framers[TOTAL_FRAMER_COUNT];
+extern ServiceCallback_t ConsoleLineCallback;
+extern ServiceCallback_t ConsolePassthruCallback;
 
-// Routing table function handles need to get bound initially
-extern BytesInFailable_VoidOut_VTableEntry_t frame_vtable[TOTAL_FRAMER_COUNT*TOTAL_SERVICE_COUNT];
+extern LineFramerState_t LineFramerState;
+extern PassthruFramerState_t PassthruFramerState;
+
+extern Console_t uart1_console;
+extern ByteSpan_t uart1_console_cache;
+extern uint8_t uart1_console_buffer[BUFFER_LEN_MAX];
+
+extern ByteSpan_t dispatcher_uart1_cache;
+extern uint8_t dispatcher_buffer[BUFFER_LEN_MAX];
 
 void system_setup();
-
-void __populate_vtables();
-void __setup_data_framers();
+void __setup_framers();
+void __setup_services();
 
 #endif //SYSTEM_SETUP_H

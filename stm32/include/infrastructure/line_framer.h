@@ -1,14 +1,12 @@
 #ifndef LINE_FRAMER_H
 #define LINE_FRAMER_H
-#include "infrastructure/bytes.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include <infrastructure/data_frame_protocol.h>
+#include <infrastructure/comms_protocol.h>
 
-#define LINE_LEN_MAX 64
 
 typedef struct {
-    uint8_t accum_buffer[LINE_LEN_MAX];
+    uint8_t accum_buffer[BUFFER_LEN_MAX];
     uint8_t accum_idx;
 
     uint8_t* new_data;
@@ -16,13 +14,14 @@ typedef struct {
     uint8_t new_data_idx;
     
     bool overflow;
-    uint8_t line_length;
+
+    ByteSpan_t output;
 } LineFramerState_t;
 
 
-void bind_line_framer(void* wc1, void* wc2);
-ByteSpan_t line_framer_get_staged_bytes(void* staging_area);
-void line_framer_stage_raw_data(void* state, ByteSpan_t p_data);
-ByteSpan_Failable_t line_framer_try_to_frame_data(void* state);
+void line_framer_init(Framer_t* framer, FramerFcns_t* vtable, void* state);
+
+void line_framer_ingest(void* state, ByteSpan_t data);
+bool line_framer_try_to_process_and_write(void* state, ByteSpan_t* p_data);
 
 #endif //LINE_FRAMER_H
