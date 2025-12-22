@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
 typedef struct {
     uint8_t* bytes;
     uint8_t count;
@@ -15,4 +16,5 @@ typedef struct {
     bool result;
 } ByteSpan_Failable_t;
 
+#define BYTESPAN(b,n) (ByteSpan_t){b,n}
 #endif //BYTES_H 

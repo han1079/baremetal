@@ -114,15 +114,16 @@ typedef struct {
 } ServiceCallback_t;
 
 typedef struct {
-    ServiceCallback_t service_cb;
-    Framer_t framer;
+    ServiceCallback_t* service_cb;
+    Framer_t* framer;
 } DataRoute_t;
 
 typedef struct {
     DataRoute_t* routing_table;
     uint8_t rtbl_count;
     TryIngestByteFromDriver driver_ingest;
-    ByteSpan_t* cache;
+    uint8_t cache[BUFFER_LEN_MAX];
+    uint8_t cached_byte_count;
     void* driver;
 } Dispatcher_t;
 

@@ -33,18 +33,6 @@ LineFramerState_t LineFramerState;
 PassthruFramerState_t PassthruFramerState;
 
 Console_t uart1_console;
-uint8_t uart1_console_buffer[BUFFER_LEN_MAX];
-uint8_t dispatcher_buffer[BUFFER_LEN_MAX];
-
-ByteSpan_t dispatcher_uart1_cache = {
-    .bytes = dispatcher_buffer,
-    .count = 0,
-};
-
-ByteSpan_t uart1_console_cache = {
-    .bytes = uart1_console_buffer,
-    .count = 0,
-};
 
 void system_setup() {
     __setup_framers();
@@ -58,12 +46,11 @@ void __setup_framers() {
 
 void __setup_services() {
     dispatcher_init(&uart1_dispatcher, 
-                    &dispatcher_uart1_cache, 
                     &uart1_routing_table[0], 
                     (void*)&UART1, 
                     uart_get_rx_buffer_next_byte);
 
-    console_init(&uart1_console, &UART1, &uart1_console_cache);   
+    console_init(&uart1_console, &UART1);   
 
     DataRoute_t dr;
     dr = bind_console(&ConsolePassthruCallback, &PassthruFramer, FRAMER_PASSTHRU);

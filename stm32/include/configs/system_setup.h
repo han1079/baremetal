@@ -29,9 +29,6 @@ extern Console_t uart1_console;
 extern ByteSpan_t uart1_console_cache;
 extern uint8_t uart1_console_buffer[BUFFER_LEN_MAX];
 
-extern ByteSpan_t dispatcher_uart1_cache;
-extern uint8_t dispatcher_buffer[BUFFER_LEN_MAX];
-
 void system_setup();
 void __setup_framers();
 void __setup_services();

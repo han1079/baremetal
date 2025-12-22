@@ -6,3 +6,4 @@ tools/
 .clangd 
 *compile_commands.json
 .cache/
+zip*

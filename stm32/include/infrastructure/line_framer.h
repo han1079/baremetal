@@ -9,8 +9,7 @@ typedef struct {
     uint8_t accum_buffer[BUFFER_LEN_MAX];
     uint8_t accum_idx;
 
-    uint8_t* new_data;
-    uint8_t new_data_len;
+    ByteSpan_t new_data;
     uint8_t new_data_idx;
     
     bool overflow;

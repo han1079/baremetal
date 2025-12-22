@@ -11,7 +11,8 @@ static const string_t prefix = CSTRING(">> ");
 
 typedef struct {
     UartDriver_t* uart;
-    ByteSpan_t* cache;
+    uint8_t cache[BUFFER_LEN_MAX];
+    uint8_t cached_byte_count;
 } Console_t;
 
 typedef void (*DoConsoleIngest)(Console_t* console, ByteSpan_t p_data);
@@ -24,9 +25,9 @@ typedef struct {
 
 extern ConsoleVTable_t console_vtable;
 
-void console_init(Console_t* console, UartDriver_t* uart, ByteSpan_t* cache);
+void console_init(Console_t* console, UartDriver_t* uart);
 DataRoute_t bind_console(ServiceCallback_t* scb, Framer_t* framer, FramerTypeID id);
-bool change_driver(UartDriver_t* uart, ByteSpan_t* cache);
+bool change_driver(UartDriver_t* uart);
 void console_on_update();
 void console_println_bytes(ByteSpan_t p_data);
 void console_println_string(string_t str);
