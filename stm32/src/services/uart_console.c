@@ -7,7 +7,7 @@ const ByteSpan_t CONSOLE_PREFIX = {(uint8_t*)&a[0], 3};
 
 ConsoleVTable_t console_vtable = {
     .console = (Console_t*)0,
-    .v_console_print = __console_print,
+    .v_console_print = __console_stage_tx_bytes,
 };
 
 void console_init(Console_t* console, UartDriver_t* uart) {
@@ -47,11 +47,12 @@ void console_on_update() {
         console_write_prefix();
         uart_kick_off_tx(console->uart);
     }
+    console->cached_byte_count = 0; // Reset Cache
 }
 
 void console_write_prefix() {
     Console_t* console = console_vtable.console;
-    __console_print(console, CONSOLE_PREFIX);
+    __console_stage_tx_bytes(console, CONSOLE_PREFIX);
 }
 
 void console_echo_line() {
@@ -63,7 +64,7 @@ void console_echo_line() {
         if (console->cache[cache_idx] == '\r') {
             line[line_idx] = '\r';
             line[line_idx + 1] = '\n';
-            __console_print(console, BYTESPAN(line, (line_idx+2)));
+            __console_stage_tx_bytes(console, BYTESPAN(line, (line_idx+2)));
             line_idx = 0;
         } else {
             line[line_idx] = console->cache[cache_idx];
@@ -71,12 +72,15 @@ void console_echo_line() {
         }
         cache_idx++;
     }
-    console->cached_byte_count = 0; // Reset Cache
 }
 
 
-void __console_print(Console_t* console, ByteSpan_t p_data) {
-    uart_write_byte_array(console->uart, p_data);
+void __console_stage_tx_bytes(Console_t* console, ByteSpan_t p_data) {
+    uart_stage_bytes_for_tx(console->uart, p_data);
+}
+
+void __console_stage_one_byte(Console_t* console, uint8_t byte) {
+    __uart_push_byte_to_tx_rb((void*)(console->uart), byte);
 }
 
 bool console_rx_callback_newline(void* state) {
@@ -104,13 +108,20 @@ bool console_rx_callback_newline(void* state) {
 bool console_rx_callback_passthru(void* state) {
     ByteSpan_t* p_data = (ByteSpan_t*)(state);
     // Just a direct write
-    ASSERT(p_data->count > 0);
-    if(p_data->bytes[0] != '\r') {
-        __console_print(console_vtable.console, *p_data);
-    } else {
-        __console_print(console_vtable.console, CRLF);
+    if(p_data->count == 0) { return false; }
+    uint8_t b = 0;
+    Console_t* console = console_vtable.console;
+    for (int i = 0; i < p_data->count; i++) {
+        b = p_data->bytes[i];
+        if(b == '\r' || b == '\n') {
+            // Directly write full carriage return
+            __console_stage_one_byte(console, '\r');
+            __console_stage_one_byte(console, '\n');
+        } else {
+            __console_stage_one_byte(console, b);
+        }
     }
-    uart_kick_off_tx(console_vtable.console->uart);
+    uart_kick_off_tx(console->uart);
     return true;
 }
 

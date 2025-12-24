@@ -1,9 +1,20 @@
+#include "infrastructure/comms_protocol.h"
 #include <definitions/uart_defs.h>
 
-#define UART1_BUFFER_SIZE 64 
 
-RingBuffer_t uart1_rx_rbuf;
-RingBuffer_t uart1_tx_rbuf;
+RingBuffer_t uart1_rx_rbuf = {
+    .size = BUFFER_LEN_MAX,
+    .head = 0,
+    .tail = 0,
+    .count = 0,
+};
+
+RingBuffer_t uart1_tx_rbuf = {
+    .size = BUFFER_LEN_MAX,
+    .head = 0,
+    .tail = 0,
+    .count = 0,
+};
 
 
 // UART Port Configurations
@@ -11,45 +22,54 @@ RingBuffer_t uart1_tx_rbuf;
 // Bundles them alongside a buffer for RX and TX, and ring buffer structs.
 // TODO: distinguish between mutable and immutable data here.
 
+UartHwConfig_t UART1_HW = {
+    .BASE = (UART_Typedef*)UART1_BASE,
+    .NVIC_INTERRUPT_ENABLE = (REGADDR_T*)UART_NVIC_SET_ENABLE_REG,
+    .CLOCK_SRC = (REGADDR_T*)&(RCC->CLOCK_CONFIG_3),
+    .APB_ENABLE = (REGADDR_T*)&(RCC->PERIPH_APB_2_CLOCK_ENABLE),
+    .clock_src_offset = (uint8_t)UART1_CLOCK_SOURCE_OFFSET, 
+    .nvic_iser_offset = (uint8_t)NVIC_UART1_OFFSET,
+    .apb_offset = (uint8_t)UART1_APB_ENABLE_OFFSET,
+};
+
+UartHwConfig_t UART2_HW = {
+    .BASE = (UART_Typedef*)UART2_BASE,
+    .NVIC_INTERRUPT_ENABLE = (REGADDR_T*)UART_NVIC_SET_ENABLE_REG,
+    .CLOCK_SRC = (REGADDR_T*)&(RCC->CLOCK_CONFIG_3),
+    .APB_ENABLE = (REGADDR_T*)&(RCC->PERIPH_APB_1_CLOCK_ENABLE),
+    .clock_src_offset = (uint8_t)UART2_CLOCK_SOURCE_OFFSET, 
+    .nvic_iser_offset = (uint8_t)NVIC_UART2_OFFSET,
+    .apb_offset = (uint8_t)UART2_APB_ENABLE_OFFSET,
+};
+
+UartBuffer_t UART1_BUFFER = {
+    .rx_ring_buffer = &uart1_rx_rbuf,
+    .tx_ring_buffer = &uart1_tx_rbuf,
+    .rx_dropped = 0,
+    .tx_dropped = 0,
+    .rx_max_used = 0,
+    .tx_max_used = 0,
+};
+
+UartBuffer_t UART2_BUFFER = {
+    .rx_ring_buffer = (RingBuffer_t*)0,
+    .tx_ring_buffer = (RingBuffer_t*)0,
+    .rx_dropped = 0,
+    .tx_dropped = 0,
+    .rx_max_used = 0,
+    .tx_max_used = 0,
+};
 
 UartDriver_t UART1 = {
-    .p_UART_BASE = (UART_Typedef*)UART1_BASE,
-    .p_NVIC_ENABLE_REG = (REGADDR_T*)UART_NVIC_SET_ENABLE_REG,
-    .p_UART_CLOCK_SOURCE_REG = (REGADDR_T*)&(RCC->CLOCK_CONFIG_3),
-    .p_APB_CLOCK_ENABLE_REG = (REGADDR_T*)&(RCC->PERIPH_APB_2_CLOCK_ENABLE),
-    .uart_clock_source_offset = (uint8_t)UART1_CLOCK_SOURCE_OFFSET, 
-    .nvic_enable_offset = (uint8_t)NVIC_UART1_OFFSET,
-    .apb_clock_enable_offset = (uint8_t)UART1_APB_ENABLE_OFFSET,
-    .buffer_size = (uint8_t)UART1_BUFFER_SIZE,
-    .rx_ring_buffer = (RingBuffer_t*)&uart1_rx_rbuf,
-    .tx_ring_buffer = (RingBuffer_t*)&uart1_tx_rbuf,
-    .baud_rate = (uint32_t)115200,
+    .reg = (UartHwConfig_t*)&UART1_HW,
+    .buffer = (UartBuffer_t*)&UART1_BUFFER,
+    .baud_rate = 115200,
 };
+
 UartDriver_t UART2 = {
-    .p_UART_BASE = (UART_Typedef*)UART2_BASE,
-    .p_NVIC_ENABLE_REG = (REGADDR_T*)UART_NVIC_SET_ENABLE_REG,
-    .p_UART_CLOCK_SOURCE_REG = (REGADDR_T*)&(RCC->CLOCK_CONFIG_3),
-    .p_APB_CLOCK_ENABLE_REG = (REGADDR_T*)&(RCC->PERIPH_APB_1_CLOCK_ENABLE),
-    .uart_clock_source_offset = (uint8_t)UART2_CLOCK_SOURCE_OFFSET, 
-    .nvic_enable_offset = (uint8_t)NVIC_UART2_OFFSET,
-    .apb_clock_enable_offset = (uint8_t)UART2_APB_ENABLE_OFFSET,
-    .buffer_size = (uint8_t)0,
-    .rx_ring_buffer = (RingBuffer_t*)0,
-    .tx_ring_buffer = (RingBuffer_t*)0,
-    .baud_rate = (uint32_t)115200,
-};
-UartDriver_t UART3 = {
-    .p_UART_BASE = (UART_Typedef*)UART3_BASE,
-    .p_NVIC_ENABLE_REG = (REGADDR_T*)UART_NVIC_SET_ENABLE_REG,
-    .p_UART_CLOCK_SOURCE_REG = (REGADDR_T*)&(RCC->CLOCK_CONFIG_3),
-    .p_APB_CLOCK_ENABLE_REG = (REGADDR_T*)&(RCC->PERIPH_APB_1_CLOCK_ENABLE),
-    .uart_clock_source_offset = (uint8_t)UART3_CLOCK_SOURCE_OFFSET, 
-    .nvic_enable_offset = (uint8_t)NVIC_UART3TO8_OFFSET,
-    .apb_clock_enable_offset = (uint8_t)UART3_APB_ENABLE_OFFSET,
-    .buffer_size = (uint8_t)0,
-    .rx_ring_buffer = (RingBuffer_t*)0,
-    .tx_ring_buffer = (RingBuffer_t*)0,
-    .baud_rate = (uint32_t)115200,
+    .reg = (UartHwConfig_t*)&UART2_HW,
+    .buffer = (UartBuffer_t*)&UART2_BUFFER,
+    .baud_rate = 115200,
 };
 
 const UartPort_t UART_PORT_TXPA9_RXPA10 = {

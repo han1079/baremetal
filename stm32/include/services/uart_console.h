@@ -35,7 +35,8 @@ bool console_rx_callback_passthru(void* state);
 void console_write_prefix();
 void console_echo_line();
 
-void __console_print(Console_t* console, ByteSpan_t p_data);
+void __console_stage_tx_bytes(Console_t* console, ByteSpan_t p_data);
+void __console_stage_one_byte(Console_t* console, uint8_t byte);
 
 
 #endif //UART_CONSOLE_H

@@ -48,24 +48,30 @@ typedef struct {
     REGADDR_T TRANSMIT_DATA_REG;
 } UART_Typedef;
 
-
-
-// Create a struct to hold register configuration for each UART port
-// We will create a unique instance of this for each UART port
 typedef struct {
-    UART_Typedef* p_UART_BASE;
-    REGADDR_T* p_NVIC_ENABLE_REG;
-    REGADDR_T* p_UART_CLOCK_SOURCE_REG;
-    REGADDR_T* p_APB_CLOCK_ENABLE_REG;
-    uint8_t uart_clock_source_offset;
-    uint8_t nvic_enable_offset;
-    uint8_t apb_clock_enable_offset;
-    uint8_t buffer_size;
+    UART_Typedef* BASE;
+    REGADDR_T* NVIC_INTERRUPT_ENABLE;
+    REGADDR_T* CLOCK_SRC;
+    REGADDR_T* APB_ENABLE;
+    uint8_t clock_src_offset;
+    uint8_t nvic_iser_offset;
+    uint8_t apb_offset;
+} UartHwConfig_t;
+
+typedef struct {
     RingBuffer_t* rx_ring_buffer;
     RingBuffer_t* tx_ring_buffer;
-    uint32_t baud_rate;
-} UartDriver_t; 
+    volatile uint8_t rx_dropped;
+    volatile uint8_t tx_dropped;
+    volatile uint8_t rx_max_used;
+    volatile uint8_t tx_max_used;
+} UartBuffer_t;
 
+typedef struct {
+    UartHwConfig_t* reg;
+    UartBuffer_t* buffer;
+    uint32_t baud_rate;
+} UartDriver_t;
 
 // Create a struct to hold all configuration for a UART port
 // This holds a pointer to the register config struct
@@ -78,7 +84,6 @@ typedef struct {
 
 extern UartDriver_t UART1;
 extern UartDriver_t UART2;
-extern UartDriver_t UART3;
 
 extern const UartPort_t UART_PORT_TXPA9_RXPA10;
 
