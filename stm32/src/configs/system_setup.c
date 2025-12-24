@@ -1,20 +1,17 @@
-#include "infrastructure/comms_protocol.h"
-#include "infrastructure/passthru_framer.h"
-#include "services/uart_console.h"
 #include <configs/system_setup.h> 
 
 Dispatcher_t uart1_dispatcher;
 DataRoute_t uart1_routing_table[TOTAL_FRAMER_COUNT * TOTAL_SERVICE_COUNT];
 
-FramerFcns_t LineFramerFcns = {
-    .ingest = line_framer_ingest,
-    .try_to_process_and_write = line_framer_try_to_process_and_write,
-};
+FramerFcns_t LineFramerFcns;// = {
+//    .ingest = line_framer_ingest,
+//    .try_to_process_and_write = line_framer_try_to_process_and_write,
+//};
 
-FramerFcns_t PassthruFramersFcns = {
-.ingest = passthru_framer_ingest,
-    .try_to_process_and_write = passthru_framer_try_to_process_and_write,
-};
+FramerFcns_t PassthruFramersFcns;// = {
+//.ingest = passthru_framer_ingest,
+//    .try_to_process_and_write = passthru_framer_try_to_process_and_write,
+//};
 
 Framer_t LineFramer;
 Framer_t PassthruFramer;

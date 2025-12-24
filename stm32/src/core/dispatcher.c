@@ -12,12 +12,14 @@ void dispatcher_init(Dispatcher_t* dispatcher,
                      TryIngestByteFromDriver driver_ingest) {
 
     dispatcher->routing_table = routing_table;
+    dispatcher->rtbl_count = 0;
     dispatcher->driver = driver;
     dispatcher->cached_byte_count = 0;
     dispatcher->driver_ingest = driver_ingest;
 }
 
 void bind_data_router(Dispatcher_t* dispatcher, DataRoute_t router) {
+    ASSERT(dispatcher->rtbl_count < TOTAL_FRAMER_COUNT * TOTAL_SERVICE_COUNT);
     dispatcher->routing_table[dispatcher->rtbl_count] = router;
     (dispatcher->rtbl_count)++;
 }
@@ -32,7 +34,8 @@ void dispatch_uart(Dispatcher_t* dispatcher) {
 
     // Fresh re-population of cache. The len indicator updates after each write so
     // byte count == length instead of being off by 1
-    while(data_ingester(uart, &(dispatcher->cache[dispatcher->cached_byte_count]))) {
+    while(dispatcher->cached_byte_count < BUFFER_LEN_MAX &&
+        data_ingester(uart, &(dispatcher->cache[dispatcher->cached_byte_count]))) {
         (dispatcher->cached_byte_count)++;
     }
 

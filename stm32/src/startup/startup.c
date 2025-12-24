@@ -9,7 +9,7 @@ extern MEMADDR_T  _bss_stop;
 
 extern MEMADDR_T _data_start_pos_flash;
 
-extern void main(void);
+extern int main(void);
 
 void Reset_Handler(void); 
 void NMI_Handler(void)          __attribute__((weak, alias("Crash_Handler")));
@@ -134,7 +134,7 @@ void Reset_Handler(void) {
     uint8_t* p_dest = (uint8_t*)&_data_start;
     uint8_t* p_src = (uint8_t*)&_data_start_pos_flash;
 
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         // Since the first iteration is already lined up - assign it first.
         // Increment in an organized fashion afterward.
         *p_dest = *p_src;
@@ -155,11 +155,10 @@ void Reset_Handler(void) {
      * */
     p_dest = (uint8_t*)&_bss_start;
 
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         // p_dest picks up from where it left off.
         *p_dest = 0;
         ++p_dest;
-        ++p_src;
     }
 
 

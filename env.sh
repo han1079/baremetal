@@ -8,25 +8,49 @@ if [ -z "$_OLD_PATH" ]; then
     export _OLD_PATH="$PATH"
 fi
 
+if [ -z "$_OLD_PS1" ]; then
+    export _OLD_PS1="$PS1"
+fi
 
-# Add the local ARM GCC bin folder to the FRONT of the system PATH
-export PATH="$PROJECT_ROOT/tools/gcc/bin:$PATH"
+if [ -z "$BAREMETAL_ENV_ACTIVE" ]; then
+    export BAREMETAL_ENV_ACTIVE=1
 
-# Optional: Add OpenOCD to PATH too, for convenience
-export PATH="$PROJECT_ROOT/tools/openocd/bin:$PATH"
+    # Add the local ARM GCC bin folder to the FRONT of the system PATH
+    export PATH="$PROJECT_ROOT/tools/gcc/bin:$PATH"
 
-echo "Environment activated! Using local tools."
-arm-none-eabi-gcc --version
+    # Optional: Add OpenOCD to PATH too, for convenience
+    export PATH="$PROJECT_ROOT/tools/openocd/bin:$PATH"
+    
+    # Add build directory root to PATH 
+    export PATH="$PROJECT_ROOT/build:$PATH"
 
-echo "Environment activated."
-echo "Type 'deactivate' to restore your path."
+    export PS1="(baremetal) $PS1"
+
+    echo "Environment activated! Using local tools."
+    arm-none-eabi-gcc --version
+    echo "Environment activated."
+    echo "Type 'deactivate' to restore your path."
+
+fi
+
+
+
 # 4. Define the 'deactivate' function
 deactivate() {
     if [ -n "$_OLD_PATH" ]; then
         export PATH="$_OLD_PATH"
         unset _OLD_PATH
-        unset PROJECT_ROOT
-        unset -f deactivate
-        echo "Environment deactivated."
-    fi
+        echo "Unset PATH"
+    fi 
+
+    if [ -n "$_OLD_PS1" ]; then
+        export PS1="$_OLD_PS1"
+        unset _OLD_PS1
+        echo "Removing PS1 PREFIX"
+    fi 
+
+    unset PROJECT_ROOT
+    unset BAREMETAL_ENV_ACTIVE
+    unset -f deactivate
+    echo "Environment deactivated."
 }

@@ -13,23 +13,39 @@ _estack = ORIGIN(SRAM) + LENGTH(SRAM);
 
 SECTIONS {
     .vector_segment : {
-        *(.vector_segment)
+        . = ALIGN(4);
+        KEEP(*(.vector_segment))
+        KEEP(*(.isr_vector))
+        . = ALIGN(4);
     } >FLASH  AT> FLASH
     /*We only need the vector segment in flash since it's basically
      * a bunch of callable entry points */
 
     .text : {
-        *(.text)
+        . = ALIGN(4);
+        *(.text*)
+        . = ALIGN(4);
         _text_end = .;
-        _data_start_pos_flash = .;
     } >FLASH AT> FLASH
     /*Redundant to do the LMA here, but just being careful*/
     
+    .rodata : {
+        . = ALIGN(4);
+        *(.rodata*)
+        *(.constdata*)
+        . = ALIGN(4);
+    } > FLASH 
+
     .data : {
+        . = ALIGN(4);
         _data_start = .;
-        *(.data)
+        *(.data*)
         _data_stop = .;
+        . = ALIGN(4);
     } >SRAM AT> FLASH 
+
+
+    _data_start_pos_flash = LOADADDR(.data);
     /*VMA starts in SRAM, so start assigning addr->symbols at 0x2000000.
      * This iteration process continues until all of .data is assigned.
      * 
@@ -38,9 +54,12 @@ SECTIONS {
      * a bunch - and we continue here.
      * */
 
-    .bss : {
+    .bss (NOLOAD) : {
+        . = ALIGN(4);
         _bss_start = .;
-        *(.bss)
+        *(.bss*)
+        *(COMMON)
+        . = ALIGN(4);
         _bss_stop = .;
     } > SRAM 
     /*VMA is simply symbol assignment to the latest available

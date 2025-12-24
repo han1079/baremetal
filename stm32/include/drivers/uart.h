@@ -7,14 +7,15 @@
 
 // API 
 void uart_init(UartPort_t uart_port);
-void uart_enable_interrupts(UartPort_t uart_port);
-void uart_disable_interrupts(UartPort_t uart_port);
+void uart_allow_interrupts(UartPort_t uart_port);
+void uart_disallow_interrupts(UartPort_t uart_port);
 void uart_deinit(UartPort_t uart_port);
 
 
 void uart_send_byte_blocking(UartPort_t uart_port, uint8_t data);
 uint8_t uart_receive_byte_blocking(UartPort_t uart_port);
 
+void uart_kick_off_tx(UartDriver_t* uart);
 void uart_write_byte_array(UartDriver_t* uart, ByteSpan_t p_data);
 bool uart_drain_rx_buffer_until_delimiter(UartDriver_t* uart, uint8_t delimiter, uint8_t* dest, uint8_t dest_length);
 bool uart_get_rx_buffer_next_byte(void* driver, uint8_t* dest);

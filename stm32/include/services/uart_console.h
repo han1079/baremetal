@@ -29,10 +29,11 @@ void console_init(Console_t* console, UartDriver_t* uart);
 DataRoute_t bind_console(ServiceCallback_t* scb, Framer_t* framer, FramerTypeID id);
 bool change_driver(UartDriver_t* uart);
 void console_on_update();
-void console_println_bytes(ByteSpan_t p_data);
-void console_println_string(string_t str);
 bool console_rx_callback_newline(void* state);
 bool console_rx_callback_passthru(void* state);
+
+void console_write_prefix();
+void console_echo_line();
 
 void __console_print(Console_t* console, ByteSpan_t p_data);
 

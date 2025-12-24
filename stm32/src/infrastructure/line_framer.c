@@ -17,6 +17,8 @@ void line_framer_init(Framer_t* framer, FramerFcns_t* vtable, void* state){
 
     vtable->ingest = line_framer_ingest;
     vtable->try_to_process_and_write = line_framer_try_to_process_and_write;
+
+    framer->vtbl = *vtable;
 }
 
 void line_framer_ingest(void* state, ByteSpan_t data) {
@@ -59,7 +61,8 @@ bool line_framer_try_to_process_and_write(void* state, ByteSpan_t* p_data) {
 
             break;
         
-        } else if (line->accum_buffer[line->accum_idx] == '\n') {
+        } else if ((line->accum_buffer[line->accum_idx] == '\r') ||
+                    (line->accum_buffer[line->accum_idx] == '\n')) {
         
             // Found newline. Reset accumulator to "pop" data.
             p_data->count = line->accum_idx + 1;

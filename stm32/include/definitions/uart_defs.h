@@ -55,17 +55,15 @@ typedef struct {
 typedef struct {
     UART_Typedef* p_UART_BASE;
     REGADDR_T* p_NVIC_ENABLE_REG;
-    uint8_t nvic_enable_offset;
     REGADDR_T* p_UART_CLOCK_SOURCE_REG;
-    uint8_t uart_clock_source_offset;
     REGADDR_T* p_APB_CLOCK_ENABLE_REG;
+    uint8_t uart_clock_source_offset;
+    uint8_t nvic_enable_offset;
     uint8_t apb_clock_enable_offset;
-    uint32_t baud_rate;
-    uint8_t* rx_buffer_storage;
-    uint8_t* tx_buffer_storage;
+    uint8_t buffer_size;
     RingBuffer_t* rx_ring_buffer;
     RingBuffer_t* tx_ring_buffer;
-    uint8_t buffer_size;
+    uint32_t baud_rate;
 } UartDriver_t; 
 
 

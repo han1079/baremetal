@@ -1,4 +1,3 @@
-#include "definitions/uart_defs.h"
 #include <drivers/uart.h>
 #include <drivers/gpio.h>
 #include <core/clock.h>
@@ -15,11 +14,20 @@
 #define ACK_TRANSMIT_COMPLETE_AND_CLEAR_FLAG(uart) \
     SET_BIT((uart)->p_UART_BASE->INTERRUPT_CLEAR_REG, 6); // Clear TC flag
 
+#define READ_TRANSMIT_COMPLETE_CLEAR_FLAG(uart) \
+    GET_BIT((uart)->p_UART_BASE->INTERRUPT_STATUS_REG, 6) // Get TC flag
+
 #define READ_TRANSMIT_REG_EMPTY_FLAG(uart) \
     GET_BIT((uart)->p_UART_BASE->INTERRUPT_STATUS_REG, 7) // Read TXE flag
 
 #define READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart) \
     GET_BIT((uart)->p_UART_BASE->INTERRUPT_STATUS_REG, 5) // Read RXNE flag
+
+#define READ_OVERRUN_DATA_FLAG(uart) \
+    GET_BIT((uart)->p_UART_BASE->INTERRUPT_STATUS_REG, 3)
+
+#define ACK_CLEAR_OVERRUN_FLAG(uart) \
+    SET_BIT((uart)->p_UART_BASE->INTERRUPT_CLEAR_REG, 3)
 
 void __uart_configure_gpio_pins(UartPort_t uart_port){
     gpio_configure_alt_function(*(uart_port.p_rx_pin), \
@@ -31,17 +39,12 @@ void __uart_configure_gpio_pins(UartPort_t uart_port){
                                 PINSPEED_HIGH, \
                                 PIN_PULL_FLOATING);
     set_pin_mode(*(uart_port.p_rx_pin), PINMODE_AF);
-    set_pin_mode(*(uart_port.p_tx_pin), PINMODE_AF);
+    set_pin_mode(*(uart_port.p_tx_pin), PINMODE_AF); 
 }
 
 void uart_init(UartPort_t uart_port) {
-    ring_buffer_init(uart_port.config->rx_ring_buffer, \
-        uart_port.config->rx_buffer_storage, \
-        uart_port.config->buffer_size);
-
-    ring_buffer_init(uart_port.config->tx_ring_buffer, \
-        uart_port.config->tx_buffer_storage, \
-        uart_port.config->buffer_size);
+    ring_buffer_init(uart_port.config->rx_ring_buffer);
+    ring_buffer_init(uart_port.config->tx_ring_buffer);
 
     __uart_enable_clock(uart_port.config);
     __uart_configure_gpio_pins(uart_port);
@@ -254,6 +257,7 @@ uint8_t uart_receive_byte_blocking(UartPort_t uart_port) {
 
 
 void USART1_GLOBAL_Handler() {
+    volatile uint32_t isr_sniffer = UART1.p_UART_BASE->INTERRUPT_STATUS_REG;
     // Check RXNE Flag
     if (READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(&UART1)) {
         uint8_t received_byte = READ_BYTE_FROM_RECEIVE_REG(&UART1);
@@ -270,23 +274,33 @@ void USART1_GLOBAL_Handler() {
             __uart_disable_tx_interrupt(&UART1);
         }
     }
+
+    if (READ_OVERRUN_DATA_FLAG(&UART1)) {
+        ACK_CLEAR_OVERRUN_FLAG(&UART1);
+    }
+}
+
+void uart_kick_off_tx(UartDriver_t *uart) {
+    while(!READ_TRANSMIT_COMPLETE_CLEAR_FLAG(uart));
+
+    uint8_t tmp;
+    pop_from_ring_buffer(uart->tx_ring_buffer, &tmp);
+    WRITE_BYTE_TO_TRANSMIT_REG(uart, tmp);
+    // By here, we KNOW that interrupts are enabled globally, and TXE shows the shift register is empty
+    // We enable TXE interrupts to kick off the first send.
+    __uart_enable_tx_interrupt(uart);
 }
 
 void uart_write_byte_array(UartDriver_t* uart, ByteSpan_t p_data) {
     uint8_t* data = p_data.bytes;
     uint8_t length = p_data.count;
-    if ((READ_TRANSMIT_REG_EMPTY_FLAG(uart) != 0)) { return; } // UART not ready
+    if ((READ_TRANSMIT_REG_EMPTY_FLAG(uart) == 0)) { return; } // UART not ready
 
-    ASSERT(__get_uart_nvic_interrupt_enable_status(uart) != 0); // NVIC Interrupts must be enabled
     ASSERT(__get_uart_tx_interrupt_enable_status(uart) == 0); // TXE Interrupt must be disabled
 
-    for (uint32_t i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++) {
         push_to_ring_buffer(uart->tx_ring_buffer, data[i]);
     }
-
-    // By here, we KNOW that interrupts are enabled globally, and TXE shows the shift register is empty
-    // We enable TXE interrupts to kick off the first send.
-    __uart_enable_tx_interrupt(uart);
 }
 
 bool uart_drain_rx_buffer_until_delimiter(UartDriver_t* uart, uint8_t delimiter, uint8_t* dest, uint8_t dest_length) {
@@ -343,7 +357,6 @@ uint8_t uart_drain_rx_buffer_n_bytes(UartDriver_t* uart, uint8_t *dest, uint8_t 
 
 bool uart_get_rx_buffer_next_byte(void* driver, uint8_t* dest) {
     UartDriver_t* uart = (UartDriver_t*)driver;
-    while((READ_RECEIVE_DATA_REG_NOT_EMPTY_FLAG(uart) == 0)); // Wait for last byte to arrive
     uint8_t byte;
 
     // Only grab from ring buffer if there's something there.
