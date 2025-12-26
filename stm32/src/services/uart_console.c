@@ -43,9 +43,10 @@ bool change_driver(UartDriver_t* uart) {
 void console_on_update() {
     Console_t* console = console_vtable.console;
     if (console->cached_byte_count > 0) {
+        uart_transact_start(console->uart);
         console_echo_line();
         console_write_prefix();
-        uart_kick_off_tx(console->uart);
+        uart_transact_end(console->uart);
     }
     console->cached_byte_count = 0; // Reset Cache
 }
@@ -60,6 +61,7 @@ void console_echo_line() {
     uint8_t line[128];
     uint8_t cache_idx = 0;
     uint8_t line_idx = 0;
+    uart_transact_start(console->uart);
     while(cache_idx < console->cached_byte_count) {
         if (console->cache[cache_idx] == '\r') {
             line[line_idx] = '\r';
@@ -72,6 +74,7 @@ void console_echo_line() {
         }
         cache_idx++;
     }
+    uart_transact_end(console->uart);
 }
 
 
@@ -111,6 +114,7 @@ bool console_rx_callback_passthru(void* state) {
     if(p_data->count == 0) { return false; }
     uint8_t b = 0;
     Console_t* console = console_vtable.console;
+    uart_transact_start(console->uart);
     for (int i = 0; i < p_data->count; i++) {
         b = p_data->bytes[i];
         if(b == '\r' || b == '\n') {
@@ -121,7 +125,7 @@ bool console_rx_callback_passthru(void* state) {
             __console_stage_one_byte(console, b);
         }
     }
-    uart_kick_off_tx(console->uart);
+    uart_transact_end(console->uart);
     return true;
 }
 

@@ -37,6 +37,8 @@ bool push_to_ring_buffer(RingBuffer_t *rb, uint8_t data) {
     rb->head = next_head_idx;
     rb->count++;
 
+    if (rb->count > rb->max_used) { rb->max_used = rb->count; }
+
     unlock_interrupts_and_restore(key);
     return true;
 }

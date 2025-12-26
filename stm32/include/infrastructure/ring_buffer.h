@@ -11,6 +11,7 @@ typedef struct {
     volatile uint8_t head;
     volatile uint8_t tail;
     volatile uint8_t count;
+    volatile uint8_t max_used;
 } RingBuffer_t;
 
 void ring_buffer_init(RingBuffer_t* rb);

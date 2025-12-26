@@ -71,6 +71,7 @@ typedef struct {
     UartHwConfig_t* reg;
     UartBuffer_t* buffer;
     uint32_t baud_rate;
+    uint8_t tx_transactions_in_progress;
 } UartDriver_t;
 
 // Create a struct to hold all configuration for a UART port

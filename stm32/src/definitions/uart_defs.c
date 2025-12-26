@@ -7,6 +7,7 @@ RingBuffer_t uart1_rx_rbuf = {
     .head = 0,
     .tail = 0,
     .count = 0,
+    .max_used = 0,
 };
 
 RingBuffer_t uart1_tx_rbuf = {
@@ -14,6 +15,7 @@ RingBuffer_t uart1_tx_rbuf = {
     .head = 0,
     .tail = 0,
     .count = 0,
+    .max_used = 0,
 };
 
 
@@ -47,8 +49,6 @@ UartBuffer_t UART1_BUFFER = {
     .tx_ring_buffer = &uart1_tx_rbuf,
     .rx_dropped = 0,
     .tx_dropped = 0,
-    .rx_max_used = 0,
-    .tx_max_used = 0,
 };
 
 UartBuffer_t UART2_BUFFER = {
@@ -56,8 +56,6 @@ UartBuffer_t UART2_BUFFER = {
     .tx_ring_buffer = (RingBuffer_t*)0,
     .rx_dropped = 0,
     .tx_dropped = 0,
-    .rx_max_used = 0,
-    .tx_max_used = 0,
 };
 
 UartDriver_t UART1 = {
