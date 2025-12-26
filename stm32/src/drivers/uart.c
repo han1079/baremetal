@@ -1,6 +1,7 @@
 #include <drivers/uart.h>
 #include <drivers/gpio.h>
 #include <core/clock.h>
+#include <core/interrupts.h>
 
 void __uart_configure_gpio_pins(UartPort_t uart_port){
     gpio_configure_alt_function(*(uart_port.p_rx_pin), \
@@ -255,24 +256,32 @@ void uart_kick_off_tx(UartDriver_t *uart) {
 }
 
 void uart_stage_bytes_for_tx(UartDriver_t* uart, ByteSpan_t p_data) {
+    uint32_t key = lock_interrupts_and_save();
     uint8_t* data = p_data.bytes;
     uint8_t length = p_data.count;
-    if (!(__get_uart_txe(uart))) { return; } // UART not ready
+    if (!(__get_uart_txe(uart))) { 
+        unlock_interrupts_and_restore(key);
+        return; 
+    } // UART not ready
 
     for (int i = 0; i < length; i++) {
         push_to_ring_buffer(uart->buffer->tx_ring_buffer, data[i]);
     }
+    unlock_interrupts_and_restore(key);
 }
 
 bool uart_get_rx_buffer_next_byte(void* driver, uint8_t* dest) {
+    uint32_t key = lock_interrupts_and_save();
     UartDriver_t* uart = (UartDriver_t*)driver;
     uint8_t byte;
 
     // Only grab from ring buffer if there's something there.
     if (pop_from_ring_buffer(uart->buffer->rx_ring_buffer, &byte)) {
         (*dest) = byte;
+        unlock_interrupts_and_restore(key);
         return true;
     } else {
+        unlock_interrupts_and_restore(key);
         return false;
     }
 }

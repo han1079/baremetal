@@ -2,6 +2,7 @@
 #define UART_H
 
 #include <core/common.h>
+#include <core/interrupts.h>
 #include <definitions/uart_defs.h>
 #include <infrastructure/bytes.h>
 
@@ -123,8 +124,10 @@ static inline bool __get_uart_overrun_flag(UartDriver_t* uart){
 }
 
 static inline void __uart_push_byte_to_tx_rb(void* driver, uint8_t byte) {
+    uint32_t key = lock_interrupts_and_save();
     UartDriver_t* uart = (UartDriver_t*)driver;
     push_to_ring_buffer(uart->buffer->tx_ring_buffer, byte);
+    unlock_interrupts_and_restore(key);
 }
 
 #endif //UART_H
